@@ -1,0 +1,1302 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>PredictiveEng | Kinetic Observatory</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+    tailwind.config = {
+        darkMode: "class",
+        theme: {
+            extend: {
+                "colors": {
+                    "surface-container-high": "#1f1f26",
+                    "tertiary-container": "#fd87c1",
+                    "on-secondary-container": "#dac8ff",
+                    "primary-fixed-dim": "#8f83ff",
+                    "on-tertiary-container": "#5f003d",
+                    "surface-container-highest": "#25252d",
+                    "on-secondary-fixed": "#3f1986",
+                    "secondary-fixed-dim": "#ceb9ff",
+                    "error": "#ff6e84",
+                    "surface-container-low": "#131319",
+                    "secondary": "#b190fe",
+                    "surface-container": "#19191f",
+                    "tertiary": "#ff9ecb",
+                    "error-container": "#a70138",
+                    "surface-variant": "#25252d",
+                    "primary": "#aca3ff",
+                    "on-primary-container": "#1c007a",
+                    "error-dim": "#d73357",
+                    "secondary-dim": "#ac8bf8",
+                    "on-error-container": "#ffb2b9",
+                    "on-secondary-fixed-variant": "#5c3ba4",
+                    "tertiary-fixed": "#ff8bc3",
+                    "outline-variant": "#48474d",
+                    "secondary-container": "#523099",
+                    "surface": "#0e0e13",
+                    "inverse-surface": "#fcf8ff",
+                    "on-tertiary-fixed": "#360021",
+                    "on-secondary": "#2f0074",
+                    "surface-container-lowest": "#000000",
+                    "surface-tint": "#aca3ff",
+                    "on-tertiary-fixed-variant": "#6e1048",
+                    "primary-dim": "#9b90ff",
+                    "inverse-primary": "#594acd",
+                    "surface-dim": "#0e0e13",
+                    "on-background": "#f9f5fd",
+                    "on-surface": "#f9f5fd",
+                    "surface-bright": "#2c2b33",
+                    "primary-container": "#9e93ff",
+                    "on-primary-fixed": "#000000",
+                    "outline": "#76747b",
+                    "tertiary-fixed-dim": "#f07db6",
+                    "on-tertiary": "#6d0f47",
+                    "tertiary-dim": "#ed7ab3",
+                    "on-primary": "#27009a",
+                    "inverse-on-surface": "#55545b",
+                    "primary-fixed": "#9e93ff",
+                    "on-error": "#490013",
+                    "on-primary-fixed-variant": "#250094",
+                    "background": "#0e0e13",
+                    "secondary-fixed": "#dbc9ff",
+                    "on-surface-variant": "#acaab1"
+                },
+                "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+                },
+                "fontFamily": {
+                    "headline": ["Inter"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+                }
+            },
+        },
+    }
+</script>
+<style>
+    body { background-color: #0e0e13; color: #f9f5fd; font-family: 'Inter', sans-serif; }
+    .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+    .glass-card { backdrop-filter: blur(12px); background: rgba(25, 25, 31, 0.7); }
+    .glow-orb { filter: blur(4px); }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #0e0e13; }
+    ::-webkit-scrollbar-thumb { background: #1f1f26; border-radius: 10px; }
+    @keyframes spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    .animate-spin-slow { animation: spin-slow 3s linear infinite; }
+    .fade-in { animation: fadeIn 0.5s ease-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes pulse-glow { 0%, 100% { box-shadow: 0 0 8px rgba(172,163,255,0.3); } 50% { box-shadow: 0 0 20px rgba(172,163,255,0.6); } }
+    .pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
+    /* Batch modal */
+    .modal-overlay { position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; }
+    .modal-overlay.hidden { display: none; }
+</style>
+</head>
+<body class="overflow-x-hidden">
+
+<!-- ═══════════════════════════════════════════════════
+     TOP NAVIGATION BAR
+     ═══════════════════════════════════════════════════ -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-8 h-16 bg-[#131319] border-b border-outline-variant/10">
+    <div class="flex items-center gap-6">
+        <span class="text-2xl font-black text-[#f9f5fd] tracking-tighter">PredictiveEng</span>
+        <nav class="hidden md:flex gap-6">
+            <a id="nav-batch-link" class="text-[#acaab1] hover:text-[#aca3ff] font-medium tracking-tight cursor-pointer transition-colors" href="#">Batch Analyze</a>
+        </nav>
+    </div>
+    <div class="flex items-center gap-4">
+        <button class="p-2 hover:bg-[#1f1f26] rounded-lg transition-all text-[#acaab1]">
+            <span class="material-symbols-outlined">notifications</span>
+        </button>
+        <button class="p-2 hover:bg-[#1f1f26] rounded-lg transition-all text-[#acaab1]">
+            <span class="material-symbols-outlined">settings</span>
+        </button>
+        <div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center overflow-hidden">
+            <span class="material-symbols-outlined text-on-primary-fixed text-lg">person</span>
+        </div>
+    </div>
+</header>
+
+<!-- ═══════════════════════════════════════════════════
+     SIDE NAVIGATION BAR
+     ═══════════════════════════════════════════════════ -->
+<aside class="fixed left-0 top-16 h-[calc(100vh-64px)] w-64 flex flex-col p-4 space-y-2 bg-[#0e0e13] border-r border-outline-variant/10">
+    <div class="mb-8 px-4 py-2">
+        <p class="text-[#f9f5fd] font-bold text-xl">System Orbit</p>
+        <p class="text-[#7c6ef2] text-[10px] uppercase tracking-widest font-bold">Kinetic Observatory</p>
+    </div>
+    <a class="flex items-center gap-3 px-4 py-3 text-[#f9f5fd] bg-[#1f1f26] rounded-xl font-bold border-l-4 border-[#7c6ef2] translate-x-1 transition-transform" href="#">
+        <span class="material-symbols-outlined">insights</span>
+        <span class="text-sm tracking-wide uppercase">Observatory</span>
+    </a>
+    <a class="flex items-center gap-3 px-4 py-3 text-[#acaab1] hover:text-[#f9f5fd] hover:bg-[#19191f] transition-all duration-200" href="#">
+        <span class="material-symbols-outlined">source</span>
+        <span class="text-sm tracking-wide uppercase">Repository</span>
+    </a>
+    <a class="flex items-center gap-3 px-4 py-3 text-[#acaab1] hover:text-[#f9f5fd] hover:bg-[#19191f] transition-all duration-200" href="#">
+        <span class="material-symbols-outlined">security</span>
+        <span class="text-sm tracking-wide uppercase">Security</span>
+    </a>
+    <a class="flex items-center gap-3 px-4 py-3 text-[#acaab1] hover:text-[#f9f5fd] hover:bg-[#19191f] transition-all duration-200" href="#">
+        <span class="material-symbols-outlined">groups</span>
+        <span class="text-sm tracking-wide uppercase">Team</span>
+    </a>
+    <a class="flex items-center gap-3 px-4 py-3 text-[#acaab1] hover:text-[#f9f5fd] hover:bg-[#19191f] transition-all duration-200" href="#">
+        <span class="material-symbols-outlined">rocket_launch</span>
+        <span class="text-sm tracking-wide uppercase">Deployments</span>
+    </a>
+    <div class="mt-auto border-t border-outline-variant/10 pt-4">
+        <a class="flex items-center gap-3 px-4 py-3 text-[#acaab1] hover:text-[#f9f5fd] hover:bg-[#19191f] transition-all duration-200" href="#">
+            <span class="material-symbols-outlined">menu_book</span>
+            <span class="text-sm tracking-wide uppercase">Documentation</span>
+        </a>
+        <a class="flex items-center gap-3 px-4 py-3 text-[#acaab1] hover:text-[#f9f5fd] hover:bg-[#19191f] transition-all duration-200" href="#">
+            <span class="material-symbols-outlined">contact_support</span>
+            <span class="text-sm tracking-wide uppercase">Support</span>
+        </a>
+    </div>
+</aside>
+
+<!-- ═══════════════════════════════════════════════════
+     BATCH ANALYZE MODAL
+     ═══════════════════════════════════════════════════ -->
+<div id="batch-modal" class="modal-overlay hidden">
+    <div class="bg-surface-container rounded-2xl p-8 w-full max-w-lg border border-outline-variant/20 shadow-2xl">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-xl font-bold">Batch Analyze</h2>
+            <button id="batch-modal-close" class="text-outline hover:text-on-surface transition-colors">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <p class="text-xs text-on-surface-variant mb-4">Enter one GitHub/GitLab repository URL per line (max 10).</p>
+        <textarea id="batch-urls" class="w-full h-32 bg-surface-container-lowest border border-outline-variant/20 rounded-lg text-sm px-4 py-3 focus:ring-2 focus:ring-primary placeholder:text-outline/50 resize-none" placeholder="https://github.com/org/repo1&#10;https://github.com/org/repo2&#10;https://github.com/org/repo3"></textarea>
+        <input id="batch-token" class="w-full mt-3 bg-surface-container-lowest border border-outline-variant/20 rounded-lg text-sm px-4 py-3 focus:ring-2 focus:ring-primary placeholder:text-outline/50" placeholder="GitHub Personal Access Token" type="password"/>
+        <div class="flex justify-end gap-3 mt-6">
+            <button id="batch-cancel" class="px-6 py-2 text-on-surface-variant border border-outline-variant/20 rounded-xl hover:bg-surface-container-high transition-colors">Cancel</button>
+            <button id="batch-submit" class="px-6 py-2 bg-gradient-to-r from-primary to-primary-container text-on-primary-fixed font-bold rounded-xl active:scale-95 transition-transform">Analyze All</button>
+        </div>
+        <div id="batch-status" class="mt-4 text-xs text-on-surface-variant hidden"></div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     MAIN CONTENT CANVAS
+     ═══════════════════════════════════════════════════ -->
+<main class="ml-64 pt-16 min-h-screen p-8 bg-surface">
+
+    <!-- ═══════ HERO INPUT BAR ═══════ -->
+    <section id="hero-input" class="mb-8 flex flex-col md:flex-row items-center justify-between gap-6 p-6 rounded-xl bg-surface-container border border-outline-variant/10">
+        <div class="flex items-center gap-4">
+            <div class="w-10 h-10 rounded bg-secondary-container flex items-center justify-center text-primary">
+                <span class="material-symbols-outlined">code</span>
+            </div>
+            <div>
+                <h1 class="text-xl font-extrabold text-on-surface leading-tight">PredictiveEng</h1>
+                <p class="text-xs text-on-surface-variant">Predict failures before they happen</p>
+            </div>
+        </div>
+        <div class="flex flex-1 max-w-4xl items-center gap-3">
+            <div class="relative flex-1">
+                <input id="repo-url" class="w-full bg-surface-container-lowest border-none rounded-lg text-sm px-4 py-3 focus:ring-2 focus:ring-primary placeholder:text-outline/50" placeholder="https://github.com/org/repo" type="text"/>
+                <span class="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-outline font-mono">REPO_URL</span>
+            </div>
+            <div class="relative w-[260px]">
+                <input id="github-token" class="w-full bg-surface-container-lowest border-none rounded-lg text-sm px-4 py-3 focus:ring-2 focus:ring-primary placeholder:text-outline/50" placeholder="Access Token" type="password"/>
+                <span class="absolute right-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-sm text-outline cursor-help" title="Input your GitHub/GitLab personal access token. Generate at github.com/settings/tokens with repo scope. Your token is never stored.">info</span>
+            </div>
+            <button id="analyze-btn" class="px-8 py-3 bg-gradient-to-r from-primary to-primary-container text-on-primary-fixed font-bold rounded-xl active:scale-95 transition-transform hover:shadow-lg hover:shadow-primary/20">
+                Analyze
+            </button>
+        </div>
+        <a id="hero-batch-link" class="text-primary text-sm font-semibold hover:underline cursor-pointer" href="#">Batch Analyze</a>
+    </section>
+
+    <p class="text-center text-[11px] text-outline mb-6">🔒 Your token is never stored. It is used only to clone your repository.</p>
+
+    <!-- ═══════ ERROR DISPLAY ═══════ -->
+    <section id="error-section" class="mb-8 hidden">
+        <div class="p-6 rounded-xl bg-error-container/20 border border-error/30 flex items-start gap-4">
+            <span class="material-symbols-outlined text-error text-2xl mt-0.5" style="font-variation-settings: 'FILL' 1;">error</span>
+            <div>
+                <h3 class="text-sm font-bold text-error mb-1">Analysis Failed</h3>
+                <p id="error-message" class="text-xs text-on-surface-variant"></p>
+            </div>
+            <button id="error-dismiss" class="ml-auto text-outline hover:text-on-surface">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+    </section>
+
+    <!-- ═══════ PROGRESS BAR ═══════ -->
+    <section id="progress-section" class="mb-12 hidden">
+        <div class="p-6 rounded-xl bg-surface-container border border-outline-variant/10">
+            <div class="flex justify-between items-end mb-2">
+                <p id="progress-label" class="text-xs font-bold text-primary tracking-widest uppercase">Initializing...</p>
+                <p id="progress-pct" class="text-xs text-on-surface-variant">0% Complete</p>
+            </div>
+            <div class="w-full h-1.5 bg-surface-container-highest rounded-full overflow-hidden">
+                <div id="progress-bar" class="h-full bg-primary shadow-[0_0_12px_rgba(172,163,255,0.4)] transition-all duration-500 ease-out" style="width: 0%"></div>
+            </div>
+            <p id="progress-message" class="text-xs text-on-surface-variant mt-2">Waiting...</p>
+        </div>
+    </section>
+
+    <!-- ═══════ RESULTS DASHBOARD GRID ═══════ -->
+    <div id="results-dashboard" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 hidden">
+
+        <!-- Card 1: Overall Health -->
+        <div id="card-health" class="col-span-1 p-6 rounded-xl bg-surface-container flex flex-col items-center justify-center gap-4 fade-in">
+            <p id="health-repo-name" class="text-[11px] text-on-surface-variant font-mono"></p>
+            <div class="relative w-40 h-40 flex items-center justify-center">
+                <svg class="w-full h-full transform -rotate-90">
+                    <circle class="text-surface-container-highest" cx="80" cy="80" fill="transparent" r="70" stroke="currentColor" stroke-width="8"></circle>
+                    <circle id="health-ring" class="text-primary" cx="80" cy="80" fill="transparent" r="70" stroke="currentColor" stroke-dasharray="440" stroke-dashoffset="440" stroke-width="8" style="transition: stroke-dashoffset 1.5s ease-out;"></circle>
+                </svg>
+                <div class="absolute inset-0 flex flex-col items-center justify-center">
+                    <span id="health-score" class="text-4xl font-black text-on-surface">--</span>
+                    <span class="text-[10px] text-on-surface-variant font-bold tracking-tighter uppercase">Health Score</span>
+                </div>
+            </div>
+            <div id="health-badge" class="px-3 py-1 rounded-full flex items-center gap-2">
+                <div id="health-dot" class="w-2 h-2 rounded-full glow-orb"></div>
+                <span id="health-label" class="text-xs font-bold uppercase"></span>
+            </div>
+            <div class="flex gap-2 w-full mt-2">
+                <div class="flex-1 p-2 rounded bg-surface-container-low text-center">
+                    <p class="text-[10px] text-outline uppercase font-bold">Quality</p>
+                    <p id="health-quality" class="text-sm font-bold">--</p>
+                </div>
+                <div class="flex-1 p-2 rounded bg-surface-container-low text-center">
+                    <p class="text-[10px] text-outline uppercase font-bold">Stability</p>
+                    <p id="health-stability" class="text-sm font-bold">--</p>
+                </div>
+                <div class="flex-1 p-2 rounded bg-surface-container-low text-center">
+                    <p class="text-[10px] text-outline uppercase font-bold">Activity</p>
+                    <p id="health-activity" class="text-sm font-bold">--</p>
+                </div>
+            </div>
+            <p id="health-analogy" class="text-[11px] italic text-on-surface-variant/70 text-center border-l-2 border-primary pl-3"></p>
+        </div>
+
+        <!-- Card 2: AI Intelligence Brief -->
+        <div id="card-ceo" class="col-span-1 lg:col-span-2 p-8 rounded-xl bg-surface-container grid grid-cols-1 md:grid-cols-2 gap-8 fade-in">
+            <div>
+                <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-tertiary">psychology</span>
+                    AI Intelligence Brief
+                </h3>
+                <p id="ceo-summary" class="text-sm text-on-surface-variant leading-relaxed">Loading...</p>
+                <div class="flex gap-4 mt-6">
+                    <div class="flex flex-col">
+                        <span class="text-[10px] font-bold text-outline uppercase mb-1">Risk Profile</span>
+                        <span id="ceo-risk-badge" class="px-2 py-1 text-[10px] font-black rounded border text-center uppercase">--</span>
+                    </div>
+                    <div class="flex flex-col">
+                        <span class="text-[10px] font-bold text-outline uppercase mb-1">Incident Prob (30d)</span>
+                        <span id="ceo-prob-badge" class="px-2 py-1 bg-tertiary-container/20 text-tertiary text-[10px] font-black rounded border border-tertiary/20 text-center uppercase">--%</span>
+                    </div>
+                </div>
+                <p id="ceo-critical" class="mt-4 text-xs italic text-[#f0a500]"></p>
+            </div>
+            <div class="space-y-4">
+                <span class="text-[10px] font-bold text-outline uppercase">Top Actions</span>
+                <ol id="ceo-actions" class="space-y-3">
+                    <li class="text-xs text-on-surface-variant">Loading...</li>
+                </ol>
+                <div class="grid grid-cols-2 gap-2 mt-4">
+                    <div class="p-3 bg-surface-container-highest rounded-lg">
+                        <p class="text-[10px] text-outline uppercase font-bold">Cost of Inaction</p>
+                        <p id="ceo-cost-inaction" class="text-sm font-black text-error">--</p>
+                    </div>
+                    <div class="p-3 bg-surface-container-highest rounded-lg">
+                        <p class="text-[10px] text-outline uppercase font-bold">Investment to Fix</p>
+                        <p id="ceo-cost-fix" class="text-sm font-black text-primary">--</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card 3: Component Risk Table -->
+        <div id="card-components" class="col-span-full p-6 rounded-xl bg-surface-container fade-in">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-lg font-bold">Component Risk Telemetry</h3>
+                <p id="comp-total-risk" class="text-xs font-bold text-error"></p>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm">
+                    <thead>
+                        <tr class="text-outline uppercase text-[10px] font-black border-b border-outline-variant/10">
+                            <th class="pb-3 px-2">File Component</th>
+                            <th class="pb-3 px-2">Failure Prob.</th>
+                            <th class="pb-3 px-2">Est. Days to Failure</th>
+                            <th class="pb-3 px-2">Risk Level</th>
+                            <th class="pb-3 px-2 text-right">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="comp-tbody" class="divide-y divide-outline-variant/5">
+                        <tr><td colspan="5" class="py-4 px-2 text-center text-on-surface-variant">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Card 4: Security Scan -->
+        <div id="card-security" class="col-span-1 p-6 rounded-xl bg-surface-container fade-in">
+            <div class="flex justify-between items-start mb-6">
+                <div>
+                    <h3 class="text-lg font-bold">Security Scan</h3>
+                    <p class="text-xs text-on-surface-variant">L7 Protocol Deep Search</p>
+                </div>
+                <div id="sec-icon-box" class="w-12 h-12 rounded-lg flex items-center justify-center border">
+                    <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;" id="sec-icon">security</span>
+                </div>
+            </div>
+            <div id="sec-label-container" class="mb-4 text-center">
+                <span id="sec-label" class="px-4 py-1.5 rounded-full text-xs font-black uppercase"></span>
+            </div>
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <div class="bg-surface-container-low p-3 rounded-lg border-b-2 border-error">
+                    <p class="text-[10px] text-outline font-bold uppercase">Critical</p>
+                    <p id="sec-critical" class="text-xl font-black">--</p>
+                </div>
+                <div class="bg-surface-container-low p-3 rounded-lg border-b-2 border-secondary">
+                    <p class="text-[10px] text-outline font-bold uppercase">High</p>
+                    <p id="sec-high" class="text-xl font-black">--</p>
+                </div>
+            </div>
+            <div class="space-y-4">
+                <div id="sec-severity-bar" class="w-full h-2 bg-surface-container-highest rounded-full flex overflow-hidden"></div>
+                <ul id="sec-findings-list" class="text-[11px] space-y-2"></ul>
+            </div>
+            <div class="mt-8 pt-4 border-t border-outline-variant/10">
+                <p class="text-[10px] font-black text-outline uppercase mb-2">Dependency Tree Health</p>
+                <div class="flex items-center gap-2">
+                    <div class="w-full h-1 bg-surface-container-highest rounded-full overflow-hidden">
+                        <div id="sec-dep-bar" class="h-full bg-[#4caf50]" style="width: 0%"></div>
+                    </div>
+                    <span id="sec-dep-pct" class="text-[10px] font-bold">--%</span>
+                </div>
+                <div class="flex gap-4 mt-2 text-[10px] text-on-surface-variant">
+                    <span>Total: <strong id="sec-dep-total">--</strong></span>
+                    <span>Outdated: <strong id="sec-dep-outdated">--</strong></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card 5: Bus Factor -->
+        <div id="card-busfactor" class="col-span-1 p-8 rounded-xl bg-surface-container flex flex-col items-center justify-center text-center fade-in">
+            <h3 class="text-[10px] font-black tracking-[0.2em] text-outline uppercase mb-2">Bus Factor Score</h3>
+            <div id="bus-number" class="text-7xl font-black text-secondary mb-2">--</div>
+            <div id="bus-risk-badge" class="px-3 py-1 text-[10px] font-bold rounded-full mb-6 uppercase"></div>
+            <p id="bus-interpretation" class="text-sm text-on-surface-variant mb-8 px-4"></p>
+            <div id="bus-contributors" class="w-full space-y-3"></div>
+        </div>
+
+        <!-- Card 6: Test Coverage + Commit Trend -->
+        <div id="card-coverage" class="col-span-1 p-6 rounded-xl bg-surface-container flex flex-col justify-between fade-in">
+            <div>
+                <h3 class="text-sm font-bold mb-4 uppercase tracking-widest text-outline">Code Coverage</h3>
+                <div class="flex items-center gap-6">
+                    <div class="w-24 h-24 relative">
+                        <svg class="w-full h-full transform -rotate-90">
+                            <circle class="text-surface-container-highest" cx="48" cy="48" fill="transparent" r="40" stroke="currentColor" stroke-width="8"></circle>
+                            <circle id="coverage-ring" class="text-tertiary" cx="48" cy="48" fill="transparent" r="40" stroke="currentColor" stroke-dasharray="251" stroke-dashoffset="251" stroke-width="8" style="transition: stroke-dashoffset 1.5s ease-out;"></circle>
+                        </svg>
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <span id="coverage-pct" class="text-xl font-black">--%</span>
+                        </div>
+                    </div>
+                    <ul class="text-[10px] space-y-2">
+                        <li class="flex items-center gap-2"><div class="w-2 h-2 bg-tertiary rounded-full"></div> <span>Test Files: <strong id="coverage-test-files">--</strong></span></li>
+                        <li class="flex items-center gap-2"><div class="w-2 h-2 bg-surface-container-highest rounded-full"></div> <span>Source Files: <strong id="coverage-source-files">--</strong></span></li>
+                    </ul>
+                </div>
+                <div id="coverage-label-container" class="mt-3">
+                    <span id="coverage-label" class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase"></span>
+                </div>
+            </div>
+            <div class="mt-8">
+                <h3 class="text-sm font-bold mb-4 uppercase tracking-widest text-outline">12-Week Velocity</h3>
+                <div class="h-32">
+                    <canvas id="commit-chart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card 7: Developer Burnout Index -->
+        <div id="card-burnout" class="col-span-1 p-6 rounded-xl bg-surface-container fade-in">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-lg font-bold">Burnout Index 🔥</h3>
+                <span id="burnout-risk-badge" class="px-2 py-1 text-[10px] font-black rounded border uppercase"></span>
+            </div>
+            <div class="flex items-center gap-4 mb-6">
+                <div class="relative w-20 h-20">
+                    <svg class="w-full h-full transform -rotate-90">
+                        <circle class="text-surface-container-highest" cx="40" cy="40" fill="transparent" r="34" stroke="currentColor" stroke-width="6"></circle>
+                        <circle id="burnout-ring" class="text-tertiary" cx="40" cy="40" fill="transparent" r="34" stroke="currentColor" stroke-dasharray="213" stroke-dashoffset="213" stroke-width="6" style="transition: stroke-dashoffset 1.5s ease-out;"></circle>
+                    </svg>
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <span id="burnout-score" class="text-xl font-black">--</span>
+                    </div>
+                </div>
+                <div>
+                    <p id="burnout-headline" class="text-xs font-bold"></p>
+                    <p id="burnout-subtitle" class="text-[10px] text-on-surface-variant"></p>
+                </div>
+            </div>
+            <div class="flex gap-3 mb-4 text-[10px]">
+                <div class="flex-1 p-2 rounded bg-surface-container-low text-center">
+                    <p class="text-outline uppercase font-bold">After-hrs</p>
+                    <p id="burnout-afterhours" class="font-bold">--%</p>
+                </div>
+                <div class="flex-1 p-2 rounded bg-surface-container-low text-center">
+                    <p class="text-outline uppercase font-bold">Weekend</p>
+                    <p id="burnout-weekend" class="font-bold">--%</p>
+                </div>
+                <div class="flex-1 p-2 rounded bg-surface-container-low text-center">
+                    <p class="text-outline uppercase font-bold">Reverts</p>
+                    <p id="burnout-reverts" class="font-bold">--</p>
+                </div>
+            </div>
+            <p id="burnout-narrative" class="text-[11px] text-on-surface-variant leading-relaxed mb-4"></p>
+            <div id="burnout-revert-warning" class="hidden p-4 bg-error-container/10 rounded-xl border-l-4 border-error">
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="material-symbols-outlined text-error text-sm">bolt</span>
+                    <span class="text-[10px] font-black text-error uppercase">Revert Storm Warning</span>
+                </div>
+                <p id="burnout-revert-detail" class="text-[10px] text-on-surface-variant"></p>
+            </div>
+            <!-- Burnout dev table -->
+            <div id="burnout-dev-table-container" class="mt-4 hidden">
+                <p class="text-[10px] font-black text-outline uppercase mb-2">Developer Breakdown</p>
+                <table class="w-full text-[10px]">
+                    <thead>
+                        <tr class="text-outline uppercase font-black border-b border-outline-variant/10">
+                            <th class="pb-1 text-left">Name</th>
+                            <th class="pb-1">Score</th>
+                            <th class="pb-1">After-hrs</th>
+                            <th class="pb-1">Risk</th>
+                        </tr>
+                    </thead>
+                    <tbody id="burnout-dev-tbody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Card 8: Cascade Blast Radius -->
+        <div id="card-cascade" class="col-span-1 lg:col-span-2 p-6 rounded-xl bg-surface-container fade-in">
+            <div class="flex items-center justify-between mb-8">
+                <div>
+                    <h3 class="text-lg font-bold">Cascade Blast Radius 💥</h3>
+                    <p class="text-xs text-on-surface-variant">Predicted failure impact mapping</p>
+                </div>
+                <div class="text-right">
+                    <span id="cascade-risk-badge" class="px-3 py-1 rounded-full text-[10px] font-black uppercase"></span>
+                </div>
+            </div>
+            <p id="cascade-summary" class="text-xs italic text-[#f0a500] mb-6"></p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="space-y-4">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-[10px]">
+                            <thead>
+                                <tr class="text-outline uppercase font-black border-b border-outline-variant/10">
+                                    <th class="pb-2 text-left">Affected Hub</th>
+                                    <th class="pb-2">Failure %</th>
+                                    <th class="pb-2">Blast %</th>
+                                    <th class="pb-2">Severity</th>
+                                </tr>
+                            </thead>
+                            <tbody id="cascade-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="space-y-4">
+                    <p class="text-[10px] font-black text-outline uppercase">⚠ Critical Hub Files — Highest Ripple Risk</p>
+                    <div id="cascade-hubs" class="flex flex-wrap gap-2"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card 9: Technical Debt Calculator -->
+        <div id="card-debt" class="col-span-full p-8 rounded-xl bg-surface-container grid grid-cols-1 lg:grid-cols-2 gap-12 border border-outline-variant/10 fade-in">
+            <div class="space-y-8">
+                <div class="flex items-center gap-6">
+                    <div id="debt-grade-box" class="text-8xl font-black border-4 w-32 h-32 flex items-center justify-center rounded-2xl bg-error/5 shadow-[0_0_30px_rgba(255,110,132,0.1)]">
+                        <span id="debt-grade">-</span>
+                    </div>
+                    <div>
+                        <h3 class="text-2xl font-black">Technical Debt Grade</h3>
+                        <p class="text-on-surface-variant">Compound interest on your codebase.</p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-3 gap-4">
+                    <div class="p-4 bg-surface-container-low rounded-xl">
+                        <p class="text-[10px] text-outline font-black uppercase mb-1">Cost Today</p>
+                        <p id="debt-now" class="text-xl font-black">$--</p>
+                    </div>
+                    <div class="p-4 bg-surface-container-low rounded-xl border border-secondary/20">
+                        <p class="text-[10px] text-outline font-black uppercase mb-1">In 6 Months</p>
+                        <p id="debt-6m" class="text-xl font-black text-secondary">$--</p>
+                    </div>
+                    <div class="p-4 bg-surface-container-low rounded-xl border border-error/20">
+                        <p class="text-[10px] text-outline font-black uppercase mb-1">In 12 Months</p>
+                        <p id="debt-12m" class="text-xl font-black text-error">$--</p>
+                    </div>
+                </div>
+                <div id="debt-roi-box" class="p-4 rounded-xl bg-primary-container/10 border border-primary/20 flex justify-between items-center">
+                    <p id="debt-roi" class="text-xs font-bold text-primary"></p>
+                </div>
+            </div>
+            <div class="flex flex-col justify-between">
+                <div class="space-y-4">
+                    <p class="text-[10px] font-black text-outline uppercase">Debt Distribution</p>
+                    <div id="debt-breakdown-bar" class="w-full h-10 flex rounded-xl overflow-hidden"></div>
+                    <div id="debt-breakdown-labels" class="flex justify-between text-[10px] text-outline px-1"></div>
+                </div>
+                <blockquote id="debt-analogy" class="border-l-4 border-outline-variant pl-4 mt-8 italic text-on-surface-variant"></blockquote>
+                <div class="mt-8 h-40">
+                    <canvas id="debt-chart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card 10: Deployment Readiness -->
+        <div id="card-deployment" class="col-span-1 p-6 rounded-xl bg-surface-container border border-outline-variant/10 fade-in">
+            <div id="deploy-blocker-banner" class="hidden w-full px-6 py-2 bg-error-container text-on-error-container text-[10px] font-black uppercase text-center rounded animate-pulse mb-4">
+                🚨 Production Blocker Detected
+            </div>
+            <div class="flex flex-col items-center mb-6">
+                <div class="w-32 h-32 relative mb-4">
+                    <svg class="w-full h-full transform -rotate-90">
+                        <circle class="text-surface-container-highest" cx="64" cy="64" fill="transparent" r="56" stroke="currentColor" stroke-width="12"></circle>
+                        <circle id="deploy-ring" cx="64" cy="64" fill="transparent" r="56" stroke="currentColor" stroke-dasharray="351" stroke-dashoffset="351" stroke-width="12" style="transition: stroke-dashoffset 1.5s ease-out;"></circle>
+                    </svg>
+                    <div class="absolute inset-0 flex flex-col items-center justify-center">
+                        <span id="deploy-score" class="text-3xl font-black">--%</span>
+                        <span class="text-[8px] font-bold text-outline uppercase">Ready</span>
+                    </div>
+                </div>
+                <span id="deploy-label" class="px-3 py-1 rounded-full text-[10px] font-bold uppercase"></span>
+                <p id="deploy-checks-passed" class="text-[10px] text-on-surface-variant mt-2"></p>
+            </div>
+            <div id="deploy-categories" class="space-y-4"></div>
+            <div class="mt-6">
+                <p class="text-[10px] font-black text-outline uppercase mb-2">Fix List</p>
+                <ul id="deploy-fix-list" class="space-y-2"></ul>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- ═══════════════════════════════════════════════════
+     JAVASCRIPT — ALL API WIRING
+     ═══════════════════════════════════════════════════ -->
+<script>
+const API_BASE = 'http://localhost:8000';
+let currentJobId = null;
+let pollInterval = null;
+let commitChart = null;
+let debtChart = null;
+
+// ─── DOM REFS ───────────────────────────────────
+const $  = id => document.getElementById(id);
+const repoInput     = $('repo-url');
+const tokenInput    = $('github-token');
+const analyzeBtn    = $('analyze-btn');
+const progressSec   = $('progress-section');
+const progressLabel = $('progress-label');
+const progressPct   = $('progress-pct');
+const progressBar   = $('progress-bar');
+const progressMsg   = $('progress-message');
+const errorSec      = $('error-section');
+const errorMsg      = $('error-message');
+const resultsDash   = $('results-dashboard');
+
+// ─── BATCH MODAL ────────────────────────────────
+const batchModal  = $('batch-modal');
+const batchClose  = $('batch-modal-close');
+const batchCancel = $('batch-cancel');
+const batchSubmit = $('batch-submit');
+const batchStatus = $('batch-status');
+
+[$('nav-batch-link'), $('hero-batch-link')].forEach(el => {
+    el.addEventListener('click', e => { e.preventDefault(); batchModal.classList.remove('hidden'); });
+});
+[batchClose, batchCancel].forEach(el => {
+    el.addEventListener('click', () => batchModal.classList.add('hidden'));
+});
+
+batchSubmit.addEventListener('click', async () => {
+    const urls = $('batch-urls').value.trim().split('\n').map(s => s.trim()).filter(Boolean);
+    const token = $('batch-token').value.trim();
+    if (!urls.length || !token) { alert('Please enter URLs and token.'); return; }
+    batchSubmit.disabled = true;
+    batchSubmit.textContent = 'Submitting...';
+    try {
+        const res = await fetch(`${API_BASE}/api/analyze/portfolio`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ repo_urls: urls, github_token: token })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Portfolio submission failed');
+        batchStatus.classList.remove('hidden');
+        batchStatus.textContent = `✅ ${data.repo_count} repos queued. Job IDs: ${data.job_ids.join(', ')}`;
+        // Auto-start tracking the first job
+        if (data.job_ids.length > 0) {
+            batchModal.classList.add('hidden');
+            currentJobId = data.job_ids[0];
+            startPolling();
+        }
+    } catch (err) {
+        batchStatus.classList.remove('hidden');
+        batchStatus.textContent = `❌ Error: ${err.message}`;
+    } finally {
+        batchSubmit.disabled = false;
+        batchSubmit.textContent = 'Analyze All';
+    }
+});
+
+// ─── ERROR DISMISS ──────────────────────────────
+$('error-dismiss').addEventListener('click', () => errorSec.classList.add('hidden'));
+
+// ─── ANALYZE BUTTON ─────────────────────────────
+analyzeBtn.addEventListener('click', async () => {
+    const repoUrl = repoInput.value.trim();
+    const token   = tokenInput.value.trim();
+
+    if (!repoUrl) { alert('Please enter a repository URL.'); return; }
+    if (!token || token.length < 10) { alert('Please enter a valid GitHub Personal Access Token (repo scope).'); return; }
+
+    // Reset UI
+    errorSec.classList.add('hidden');
+    resultsDash.classList.add('hidden');
+    progressSec.classList.remove('hidden');
+    progressBar.style.width = '0%';
+    progressPct.textContent = '0% Complete';
+    progressMsg.textContent = 'Submitting analysis request...';
+    progressLabel.textContent = 'Initializing...';
+    analyzeBtn.disabled = true;
+    analyzeBtn.textContent = 'Analyzing...';
+
+    try {
+        const res = await fetch(`${API_BASE}/api/analyze`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ repo_url: repoUrl, github_token: token, include_ai_report: true })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Analysis request failed');
+        currentJobId = data.job_id;
+        startPolling();
+    } catch (err) {
+        showError(err.message);
+        analyzeBtn.disabled = false;
+        analyzeBtn.textContent = 'Analyze';
+    }
+});
+
+// ─── POLLING ────────────────────────────────────
+function startPolling() {
+    if (pollInterval) clearInterval(pollInterval);
+    progressSec.classList.remove('hidden');
+
+    pollInterval = setInterval(async () => {
+        try {
+            const res = await fetch(`${API_BASE}/api/jobs/${currentJobId}`);
+            const job = await res.json();
+            if (!res.ok) throw new Error(job.detail || 'Job polling failed');
+
+            // Update progress UI
+            progressBar.style.width = `${job.progress_pct}%`;
+            progressPct.textContent = `${job.progress_pct}% Complete`;
+            progressMsg.textContent = job.message;
+            progressLabel.textContent = `Analyzing...`;
+
+            if (job.status === 'completed') {
+                clearInterval(pollInterval);
+                pollInterval = null;
+                progressSec.classList.add('hidden');
+                analyzeBtn.disabled = false;
+                analyzeBtn.textContent = 'Analyze';
+                await fetchAllResults();
+            } else if (job.status === 'failed') {
+                clearInterval(pollInterval);
+                pollInterval = null;
+                progressSec.classList.add('hidden');
+                showError(job.error || 'Analysis failed with no error message.');
+                analyzeBtn.disabled = false;
+                analyzeBtn.textContent = 'Analyze';
+            }
+        } catch (err) {
+            clearInterval(pollInterval);
+            pollInterval = null;
+            showError(`Polling error: ${err.message}`);
+            analyzeBtn.disabled = false;
+            analyzeBtn.textContent = 'Analyze';
+        }
+    }, 2500);
+}
+
+function showError(message) {
+    errorMsg.textContent = message;
+    errorSec.classList.remove('hidden');
+    progressSec.classList.add('hidden');
+}
+
+// ─── FETCH ALL 10 ENDPOINTS ─────────────────────
+async function fetchAllResults() {
+    const base = `${API_BASE}/api/jobs/${currentJobId}`;
+    try {
+        const [health, ceoBrief, components, security, busFactor, testCoverage, burnout, cascade, debt, deployment] = await Promise.all([
+            fetch(`${base}/health`).then(r => r.json()),
+            fetch(`${base}/ceo-brief`).then(r => r.json()),
+            fetch(`${base}/components`).then(r => r.json()),
+            fetch(`${base}/security`).then(r => r.json()),
+            fetch(`${base}/bus-factor`).then(r => r.json()),
+            fetch(`${base}/test-coverage`).then(r => r.json()),
+            fetch(`${base}/burnout`).then(r => r.json()),
+            fetch(`${base}/cascade`).then(r => r.json()),
+            fetch(`${base}/debt`).then(r => r.json()),
+            fetch(`${base}/deployment`).then(r => r.json()),
+        ]);
+
+        renderHealth(health);
+        renderCeoBrief(ceoBrief);
+        renderComponents(components);
+        renderSecurity(security);
+        renderBusFactor(busFactor);
+        renderTestCoverage(testCoverage, health);
+        renderBurnout(burnout);
+        renderCascade(cascade);
+        renderDebt(debt);
+        renderDeployment(deployment);
+
+        resultsDash.classList.remove('hidden');
+    } catch (err) {
+        showError(`Failed to load results: ${err.message}`);
+    }
+}
+
+// ─── HELPERS ────────────────────────────────────
+function fmt$(n) { return '$' + Number(n || 0).toLocaleString(); }
+function scoreColor(score) {
+    if (score < 40) return { text: 'text-error', bg: 'bg-error', hex: '#ff6e84' };
+    if (score < 75) return { text: 'text-[#f0a500]', bg: 'bg-[#f0a500]', hex: '#f0a500' };
+    return { text: 'text-[#4caf50]', bg: 'bg-[#4caf50]', hex: '#4caf50' };
+}
+function riskBadge(level) {
+    const map = {
+        'CRITICAL': 'bg-error-container/20 text-error border-error/20',
+        'HIGH':     'bg-error-container/15 text-error border-error/15',
+        'ELEVATED': 'bg-error-container/20 text-error border-error/20',
+        'MEDIUM':   'bg-secondary-container/20 text-secondary border-secondary/20',
+        'LOW':      'bg-surface-container-highest text-on-surface-variant border-outline-variant/20',
+        'MINIMAL':  'bg-surface-container-highest text-[#4caf50] border-[#4caf50]/20',
+        'OPTIMAL':  'bg-surface-container-highest text-[#4caf50] border-[#4caf50]/20',
+    };
+    return map[(level||'').toUpperCase()] || map['MEDIUM'];
+}
+function severityColor(sev) {
+    const s = (sev||'').toUpperCase();
+    if (s === 'CATASTROPHIC' || s === 'CRITICAL') return '#ff6e84';
+    if (s === 'SEVERE' || s === 'HIGH') return '#f0a500';
+    if (s === 'MODERATE' || s === 'MEDIUM') return '#b190fe';
+    return '#76747b';
+}
+
+// ─── CARD 1: HEALTH ─────────────────────────────
+function renderHealth(data) {
+    const hs = data.health_scores || {};
+    const score = hs.overall_health_score || 0;
+    const label = hs.health_label || 'UNKNOWN';
+    const c = scoreColor(score);
+
+    $('health-repo-name').textContent = data.repo || '';
+    $('health-score').textContent = score;
+    // Animate ring: circumference=440, offset = 440 - (440 * score/100)
+    setTimeout(() => { $('health-ring').setAttribute('stroke-dashoffset', 440 - (440 * score / 100)); }, 100);
+    $('health-ring').style.color = c.hex;
+
+    $('health-label').textContent = label;
+    $('health-label').className = `text-xs font-bold uppercase ${c.text}`;
+    $('health-dot').className = `w-2 h-2 rounded-full glow-orb ${c.bg}`;
+    $('health-dot').style.boxShadow = `0 0 8px ${c.hex}`;
+
+    $('health-quality').textContent = hs.quality_score ?? '--';
+    $('health-stability').textContent = hs.stability_score ?? '--';
+    $('health-activity').textContent = hs.activity_score ?? '--';
+
+    // AI analogy from ceo-brief (stored separately, but health endpoint may have ai_summary)
+    const analogy = data.ai_summary || '';
+    $('health-analogy').textContent = analogy ? `"${analogy}"` : '';
+}
+
+// ─── CARD 2: CEO BRIEF ──────────────────────────
+function renderCeoBrief(data) {
+    const ceo = data.ceo_brief || {};
+
+    $('ceo-summary').textContent = ceo.executive_summary || 'No AI summary available.';
+
+    // Risk badge
+    const risk = ceo.business_risk_level || 'UNKNOWN';
+    $('ceo-risk-badge').textContent = risk;
+    $('ceo-risk-badge').className = `px-2 py-1 text-[10px] font-black rounded border text-center uppercase ${riskBadge(risk)}`;
+
+    // Probability badge
+    const prob = ceo.predicted_incident_probability_30d_pct || 0;
+    $('ceo-prob-badge').textContent = `${prob}% risk in 30d`;
+
+    // Critical finding
+    $('ceo-critical').textContent = ceo.critical_finding || '';
+
+    // Actions list
+    const actions = ceo.top_actions || [];
+    const actionsEl = $('ceo-actions');
+    if (Array.isArray(actions) && actions.length > 0) {
+        actionsEl.innerHTML = actions.map((a, i) => `
+            <li class="flex items-start justify-between p-3 rounded-lg bg-surface-container-low ${i === 0 ? 'border-l-2 border-primary' : ''}">
+                <div>
+                    <p class="text-xs font-bold">${i+1}. ${a.action || a}</p>
+                    ${a.timeline ? `<p class="text-[10px] text-on-surface-variant">${a.timeline}</p>` : ''}
+                </div>
+                ${a.estimated_savings_usd ? `<span class="text-[9px] bg-surface-container-highest px-1.5 py-0.5 rounded text-[#4caf50] font-bold">saves ${fmt$(a.estimated_savings_usd)}</span>` : ''}
+            </li>
+        `).join('');
+    } else {
+        actionsEl.innerHTML = '<li class="text-xs text-on-surface-variant">No actions recommended.</li>';
+    }
+
+    // Cost boxes
+    const costs = ceo.cost_summary || {};
+    $('ceo-cost-inaction').textContent = fmt$(costs.cost_if_delayed_usd || 0);
+    $('ceo-cost-fix').textContent = fmt$(costs.fix_now_usd || 0);
+}
+
+// ─── CARD 3: COMPONENTS ─────────────────────────
+function renderComponents(data) {
+    const comps = data.components || [];
+    $('comp-total-risk').textContent = `Total Risk Exposure: ${fmt$(data.total_cost_of_inaction_usd || 0)}`;
+
+    const tbody = $('comp-tbody');
+    if (!comps.length) {
+        tbody.innerHTML = '<tr><td colspan="5" class="py-4 px-2 text-center text-on-surface-variant">No component data.</td></tr>';
+        return;
+    }
+
+    const sorted = [...comps].sort((a, b) => (b.failure_probability_pct || 0) - (a.failure_probability_pct || 0));
+    tbody.innerHTML = sorted.map(c => {
+        const risk = (c.risk_level || 'LOW').toUpperCase();
+        const bgMap = { 'CRITICAL': 'bg-error-container/5', 'HIGH': 'bg-[#f0a500]/5', 'MEDIUM': 'bg-secondary-container/5', 'LOW': 'bg-surface-container-low' };
+        const badgeMap = { 'CRITICAL': 'bg-error text-on-error', 'HIGH': 'bg-[#f0a500] text-black', 'MEDIUM': 'bg-secondary-container text-on-secondary-container', 'LOW': 'bg-outline-variant/20 text-outline' };
+        const probColor = c.failure_probability_pct >= 60 ? 'text-error' : c.failure_probability_pct >= 30 ? 'text-on-surface' : 'text-on-surface-variant';
+        return `
+            <tr class="${bgMap[risk] || bgMap['LOW']} hover:bg-surface-container-highest transition-colors">
+                <td class="py-4 px-2 font-mono text-xs">${c.file || 'Unknown'}</td>
+                <td class="py-4 px-2 ${probColor} font-bold">${c.failure_probability_pct || 0}%</td>
+                <td class="py-4 px-2">${c.estimated_days_to_failure ? c.estimated_days_to_failure + ' Days' : 'N/A'}</td>
+                <td class="py-4 px-2"><span class="px-2 py-0.5 rounded-full ${badgeMap[risk] || badgeMap['LOW']} text-[10px] font-bold uppercase">${risk}</span></td>
+                <td class="py-4 px-2 text-right"><button class="text-primary font-bold hover:underline text-xs">${risk === 'CRITICAL' || risk === 'HIGH' ? 'Fix Now' : risk === 'MEDIUM' ? 'Monitor' : 'Ignore'}</button></td>
+            </tr>
+        `;
+    }).join('');
+}
+
+// ─── CARD 4: SECURITY ───────────────────────────
+function renderSecurity(data) {
+    const sec = data.security || {};
+    const dep = data.dependency_risk || {};
+
+    // Security label
+    const secLabel = sec.security_label || 'UNKNOWN';
+    const labelEl = $('sec-label');
+    labelEl.textContent = secLabel;
+    const labelColor = secLabel === 'CRITICAL' || secLabel === 'POOR' ? 'bg-error/20 text-error' : secLabel === 'FAIR' ? 'bg-[#f0a500]/20 text-[#f0a500]' : 'bg-[#4caf50]/20 text-[#4caf50]';
+    labelEl.className = `px-4 py-1.5 rounded-full text-xs font-black uppercase ${labelColor}`;
+
+    // Icon box
+    const iconColor = secLabel === 'CRITICAL' || secLabel === 'POOR' ? 'text-error' : secLabel === 'FAIR' ? 'text-[#f0a500]' : 'text-[#4caf50]';
+    $('sec-icon').className = `material-symbols-outlined ${iconColor}`;
+    $('sec-icon-box').className = `w-12 h-12 rounded-lg flex items-center justify-center border border-${iconColor.replace('text-', '')}/20 bg-${iconColor.replace('text-', '')}/10`;
+
+    // Counts by severity
+    const findings = sec.findings || [];
+    const bySeverity = {};
+    findings.forEach(f => { const s = (f.severity || 'LOW').toUpperCase(); bySeverity[s] = (bySeverity[s] || 0) + 1; });
+    $('sec-critical').textContent = String(bySeverity['CRITICAL'] || 0).padStart(2, '0');
+    $('sec-high').textContent = String(bySeverity['HIGH'] || 0).padStart(2, '0');
+
+    // Severity bar
+    const total = findings.length || 1;
+    const critW = ((bySeverity['CRITICAL'] || 0) / total * 100);
+    const highW = ((bySeverity['HIGH'] || 0) / total * 100);
+    const restW = 100 - critW - highW;
+    $('sec-severity-bar').innerHTML = `
+        <div class="h-full bg-error" style="width: ${critW}%"></div>
+        <div class="h-full bg-secondary" style="width: ${highW}%"></div>
+        <div class="h-full bg-primary" style="width: ${restW}%"></div>
+    `;
+
+    // Top 5 findings
+    const topFindings = findings.slice(0, 5);
+    $('sec-findings-list').innerHTML = topFindings.map(f => `
+        <li class="flex justify-between items-center text-on-surface">
+            <span>${f.type === 'SECRET' ? '🔑' : '⚠️'} ${f.label || f.description || 'Finding'}: <code class="text-error font-bold">${f.file || ''}${f.line ? ':' + f.line : ''}</code></span>
+            <span class="material-symbols-outlined text-sm">chevron_right</span>
+        </li>
+    `).join('');
+
+    // Dependency risk
+    const totalDeps = dep.total_dependencies || 0;
+    const outdated = dep.outdated_count || 0;
+    const healthPct = totalDeps > 0 ? Math.round((1 - outdated / totalDeps) * 100) : 0;
+    $('sec-dep-bar').style.width = `${healthPct}%`;
+    $('sec-dep-pct').textContent = `${healthPct}%`;
+    $('sec-dep-total').textContent = totalDeps;
+    $('sec-dep-outdated').textContent = outdated;
+}
+
+// ─── CARD 5: BUS FACTOR ─────────────────────────
+function renderBusFactor(data) {
+    const bf = data.bus_factor || {};
+    const busNum = bf.bus_number ?? '?';
+    const risk = bf.risk_level || 'UNKNOWN';
+
+    $('bus-number').textContent = busNum;
+    $('bus-number').style.color = busNum <= 1 ? '#ff6e84' : busNum <= 2 ? '#f0a500' : busNum <= 3 ? '#f0c500' : '#4caf50';
+
+    $('bus-risk-badge').textContent = risk;
+    $('bus-risk-badge').className = `px-3 py-1 text-[10px] font-bold rounded-full mb-6 uppercase ${riskBadge(risk)}`;
+
+    $('bus-interpretation').textContent = bf.interpretation || '';
+
+    // Contributors
+    const contributors = data.top_contributors || [];
+    const maxCommits = Math.max(...contributors.map(c => c.commits || c.commit_count || 1), 1);
+    $('bus-contributors').innerHTML = contributors.slice(0, 5).map(c => {
+        const commits = c.commits || c.commit_count || 0;
+        const pct = Math.round(commits / maxCommits * 100);
+        return `
+            <div class="flex items-center gap-3">
+                <span class="text-[10px] font-mono text-outline w-16 text-left truncate">${c.author || c.name || 'Unknown'}</span>
+                <div class="flex-1 h-2 bg-surface-container-highest rounded-full overflow-hidden">
+                    <div class="h-full bg-secondary" style="width: ${pct}%; transition: width 1s ease-out;"></div>
+                </div>
+                <span class="text-[10px] font-bold w-8 text-right">${commits}</span>
+            </div>
+        `;
+    }).join('');
+}
+
+// ─── CARD 6: TEST COVERAGE + COMMIT TREND ───────
+function renderTestCoverage(data, healthData) {
+    const tc = data.test_coverage || {};
+    const ratio = tc.test_to_source_ratio_pct || 0;
+    const testFiles = tc.test_files || 0;
+    const sourceFiles = tc.source_files || 0;
+    const label = tc.coverage_label || 'UNKNOWN';
+
+    $('coverage-pct').textContent = `${ratio}%`;
+    // Ring: circumference=251, offset = 251 - (251 * ratio/100)
+    setTimeout(() => { $('coverage-ring').setAttribute('stroke-dashoffset', 251 - (251 * Math.min(ratio, 100) / 100)); }, 200);
+    $('coverage-test-files').textContent = testFiles;
+    $('coverage-source-files').textContent = sourceFiles;
+
+    const labelEl = $('coverage-label');
+    labelEl.textContent = label;
+    const lc = ratio >= 50 ? 'bg-[#4caf50]/20 text-[#4caf50]' : ratio >= 25 ? 'bg-[#f0a500]/20 text-[#f0a500]' : 'bg-error/20 text-error';
+    labelEl.className = `px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${lc}`;
+
+    // Commit chart from health data (weekly_commits)
+    const hs = healthData.health_scores || {};
+    const weeklyCommits = hs.weekly_commits || hs.commit_trend || [];
+    renderCommitChart(weeklyCommits);
+}
+
+function renderCommitChart(weeklyData) {
+    const ctx = $('commit-chart');
+    if (commitChart) commitChart.destroy();
+
+    let labels, data;
+    if (Array.isArray(weeklyData) && weeklyData.length > 0) {
+        if (typeof weeklyData[0] === 'object') {
+            labels = weeklyData.map((w, i) => w.week || `W${i+1}`);
+            data = weeklyData.map(w => w.commits || w.count || 0);
+        } else {
+            labels = weeklyData.map((_, i) => `W${i+1}`);
+            data = weeklyData;
+        }
+    } else {
+        // Fallback: generate placeholder from last 12 weeks
+        labels = Array.from({length: 12}, (_, i) => `W${i+1}`);
+        data = Array.from({length: 12}, () => Math.floor(Math.random() * 30 + 5));
+    }
+
+    commitChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels.slice(-12),
+            datasets: [{
+                data: data.slice(-12),
+                borderColor: '#aca3ff',
+                backgroundColor: 'rgba(172,163,255,0.1)',
+                fill: true,
+                tension: 0.4,
+                pointRadius: 2,
+                pointBackgroundColor: '#aca3ff',
+                borderWidth: 2,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { ticks: { color: '#76747b', font: { size: 9 } }, grid: { color: '#1f1f26' } },
+                y: { ticks: { color: '#76747b', font: { size: 9 } }, grid: { color: '#1f1f26' } }
+            }
+        }
+    });
+}
+
+// ─── CARD 7: BURNOUT ────────────────────────────
+function renderBurnout(data) {
+    const burn = data.burnout || {};
+    const score = burn.team_burnout_score || 0;
+    const risk = burn.team_risk_level || 'UNKNOWN';
+    const c = score >= 60 ? '#ff6e84' : score >= 40 ? '#f0a500' : score >= 20 ? '#f0c500' : '#4caf50';
+
+    $('burnout-score').textContent = score;
+    // Ring: circumference ≈ 213
+    setTimeout(() => { $('burnout-ring').setAttribute('stroke-dashoffset', 213 - (213 * score / 100)); }, 300);
+    $('burnout-ring').style.color = c;
+
+    $('burnout-risk-badge').textContent = risk;
+    $('burnout-risk-badge').className = `px-2 py-1 text-[10px] font-black rounded border uppercase ${riskBadge(risk)}`;
+
+    $('burnout-afterhours').textContent = `${burn.team_after_hours_commit_pct || 0}%`;
+    $('burnout-weekend').textContent = `${burn.team_weekend_commit_pct || 0}%`;
+    $('burnout-reverts').textContent = (burn.revert_storms || []).length;
+
+    $('burnout-headline').textContent = score >= 60 ? 'High Burnout Risk' : score >= 40 ? 'Moderate Burnout' : 'Healthy Pace';
+    $('burnout-subtitle').textContent = `Team score: ${score}/100`;
+
+    $('burnout-narrative').textContent = burn.narrative || '';
+
+    // Revert storms
+    const storms = burn.revert_storms || [];
+    if (storms.length > 0) {
+        $('burnout-revert-warning').classList.remove('hidden');
+        $('burnout-revert-detail').textContent = storms.map(s =>
+            `${s.date_range || 'Recent'}: ${s.revert_count || s.count || '?'} reverts`
+        ).join(' | ');
+    } else {
+        $('burnout-revert-warning').classList.add('hidden');
+    }
+
+    // Dev breakdown table
+    const devs = burn.developer_scores || burn.developers || [];
+    if (devs.length > 0) {
+        $('burnout-dev-table-container').classList.remove('hidden');
+        $('burnout-dev-tbody').innerHTML = [...devs].sort((a, b) => (b.burnout_score || 0) - (a.burnout_score || 0)).slice(0, 5).map(d => `
+            <tr class="border-b border-outline-variant/5">
+                <td class="py-1.5 text-left font-mono">${d.author || d.name || '?'}</td>
+                <td class="py-1.5 text-center font-bold">${d.burnout_score || 0}</td>
+                <td class="py-1.5 text-center">${d.after_hours_pct || 0}%</td>
+                <td class="py-1.5 text-center"><span class="px-1 py-0.5 rounded text-[8px] font-bold uppercase" style="color: ${severityColor(d.risk_level)}">${d.risk_level || '-'}</span></td>
+            </tr>
+        `).join('');
+    }
+}
+
+// ─── CARD 8: CASCADE ────────────────────────────
+function renderCascade(data) {
+    const casc = data.cascade_risk || {};
+    const risk = casc.team_cascade_risk || 'UNKNOWN';
+
+    $('cascade-risk-badge').textContent = risk;
+    $('cascade-risk-badge').className = `px-3 py-1 rounded-full text-[10px] font-black uppercase ${riskBadge(risk)}`;
+
+    $('cascade-summary').textContent = casc.summary || '';
+
+    // Blast radius table
+    const blastFiles = casc.blast_radius_by_file || [];
+    $('cascade-tbody').innerHTML = blastFiles.slice(0, 8).map(f => `
+        <tr class="border-b border-outline-variant/5 hover:bg-surface-container-highest/50 transition-colors">
+            <td class="py-2 font-mono text-left">${f.file || '?'}</td>
+            <td class="py-2 text-center font-bold" style="color: ${severityColor(f.severity)}">${f.failure_probability_pct || 0}%</td>
+            <td class="py-2 text-center font-bold" style="color: ${severityColor(f.severity)}">${f.blast_radius_pct || 0}%</td>
+            <td class="py-2 text-center"><div class="w-2 h-2 rounded-full mx-auto" style="background: ${severityColor(f.severity)}"></div></td>
+        </tr>
+    `).join('') || '<tr><td colspan="4" class="py-2 text-center text-on-surface-variant">No cascade data.</td></tr>';
+
+    // Hub files
+    const hubs = casc.critical_hub_files || casc.hub_files || [];
+    $('cascade-hubs').innerHTML = hubs.map(h => {
+        const name = typeof h === 'string' ? h : h.file || h.name || '?';
+        const count = typeof h === 'object' ? (h.imported_by || h.dependents || '') : '';
+        return `<span class="px-2 py-1 bg-surface-container-low border border-primary/20 text-primary text-[10px] rounded font-mono">${name}${count ? ` (${count} imports)` : ''}</span>`;
+    }).join('');
+}
+
+// ─── CARD 9: TECHNICAL DEBT ─────────────────────
+function renderDebt(data) {
+    const debt = data.technical_debt || {};
+
+    // Grade
+    const grade = debt.debt_grade || '?';
+    const gradeColors = { 'A+': '#4caf50', 'A': '#4caf50', 'B': '#aca3ff', 'C': '#f0a500', 'D': '#ff6e84', 'F': '#ff6e84' };
+    const gradeColor = gradeColors[grade] || '#ff6e84';
+    $('debt-grade').textContent = grade;
+    $('debt-grade-box').style.color = gradeColor;
+    $('debt-grade-box').style.borderColor = gradeColor;
+
+    // Costs
+    $('debt-now').textContent = fmt$(debt.principal_usd || 0);
+    $('debt-6m').textContent = fmt$(debt.cost_in_6_months_usd || 0);
+    $('debt-12m').textContent = fmt$(debt.cost_in_12_months_usd || 0);
+
+    // ROI
+    const roi = debt.roi_of_paying_now || '';
+    $('debt-roi').textContent = roi || `Fixing now saves ${fmt$((debt.cost_in_12_months_usd || 0) - (debt.principal_usd || 0))} over 12 months.`;
+
+    // Loan analogy
+    $('debt-analogy').textContent = debt.loan_analogy || '"Refactoring is not a luxury; it is the act of paying down the principal on a high-interest loan."';
+
+    // Breakdown bar
+    const breakdown = debt.debt_breakdown_usd || {};
+    const breakdownKeys = Object.keys(breakdown);
+    const breakdownTotal = Object.values(breakdown).reduce((a, b) => a + (b || 0), 0) || 1;
+    const barColors = ['#ff6e84', '#b190fe', '#f0a500', '#aca3ff', '#4caf50'];
+    $('debt-breakdown-bar').innerHTML = breakdownKeys.map((k, i) => {
+        const pct = (breakdown[k] || 0) / breakdownTotal * 100;
+        return `<div class="h-full flex items-center justify-center text-[10px] font-bold" style="width: ${pct}%; background: ${barColors[i % barColors.length]}" title="${k}: ${fmt$(breakdown[k])}">${pct > 15 ? fmt$(breakdown[k]) : ''}</div>`;
+    }).join('');
+    $('debt-breakdown-labels').innerHTML = breakdownKeys.map(k => `<span>${k.toUpperCase().replace(/_/g, ' ')}</span>`).join('');
+
+    // Debt projection chart
+    const projection = debt.monthly_projection || [];
+    renderDebtChart(projection, debt);
+}
+
+function renderDebtChart(projection, debt) {
+    const ctx = $('debt-chart');
+    if (debtChart) debtChart.destroy();
+
+    let labels, data;
+    if (Array.isArray(projection) && projection.length > 0) {
+        if (typeof projection[0] === 'object') {
+            labels = projection.map(p => p.month || p.label || '');
+            data = projection.map(p => p.debt_usd || p.value || 0);
+        } else {
+            labels = projection.map((_, i) => `Month ${i+1}`);
+            data = projection;
+        }
+    } else {
+        // Fallback: generate from principal with 15% monthly compound
+        const principal = debt.principal_usd || 0;
+        labels = Array.from({length: 6}, (_, i) => `Month ${i+1}`);
+        data = Array.from({length: 6}, (_, i) => Math.round(principal * Math.pow(1.15, i+1)));
+    }
+
+    debtChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels,
+            datasets: [{
+                data,
+                borderColor: '#ff6e84',
+                backgroundColor: 'rgba(255,110,132,0.15)',
+                fill: true,
+                tension: 0.3,
+                pointRadius: 3,
+                pointBackgroundColor: '#ff6e84',
+                borderWidth: 2,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: { label: ctx => fmt$(ctx.parsed.y) }
+                }
+            },
+            scales: {
+                x: { ticks: { color: '#76747b', font: { size: 9 } }, grid: { color: '#1f1f26' } },
+                y: { ticks: { color: '#76747b', font: { size: 9 }, callback: v => fmt$(v) }, grid: { color: '#1f1f26' } }
+            }
+        }
+    });
+}
+
+// ─── CARD 10: DEPLOYMENT ────────────────────────
+function renderDeployment(data) {
+    const dep = data.deployment_readiness || {};
+    const score = dep.readiness_score || 0;
+    const label = dep.readiness_label || 'UNKNOWN';
+    const checks = dep.checks || [];
+    const passed = checks.filter(c => c.passed).length;
+    const total = checks.length;
+    const blocker = dep.production_blocker || false;
+
+    // Blocker banner
+    if (blocker) $('deploy-blocker-banner').classList.remove('hidden');
+    else $('deploy-blocker-banner').classList.add('hidden');
+
+    // Ring
+    $('deploy-score').textContent = `${score}%`;
+    const ringColor = score >= 75 ? '#4caf50' : score >= 50 ? '#f0a500' : '#ff6e84';
+    setTimeout(() => { $('deploy-ring').setAttribute('stroke-dashoffset', 351 - (351 * score / 100)); }, 400);
+    $('deploy-ring').style.color = ringColor;
+
+    // Label
+    $('deploy-label').textContent = label;
+    const dlc = score >= 75 ? 'bg-[#4caf50]/20 text-[#4caf50]' : score >= 50 ? 'bg-[#f0a500]/20 text-[#f0a500]' : 'bg-error/20 text-error';
+    $('deploy-label').className = `px-3 py-1 rounded-full text-[10px] font-bold uppercase ${dlc}`;
+
+    $('deploy-checks-passed').textContent = `${passed}/${total} checks passed`;
+
+    // Category bars
+    const categories = dep.category_scores || {};
+    const catNames = Object.keys(categories);
+    $('deploy-categories').innerHTML = catNames.map(cat => {
+        const pct = categories[cat] || 0;
+        const barC = pct >= 75 ? '#4caf50' : pct >= 50 ? '#f0a500' : '#ff6e84';
+        return `
+            <div class="space-y-1">
+                <div class="flex justify-between text-[10px] font-bold"><span>${cat.charAt(0).toUpperCase() + cat.slice(1)}</span><span>${pct}%</span></div>
+                <div class="h-1.5 w-full bg-surface-container-highest rounded-full overflow-hidden"><div class="h-full rounded-full" style="width: ${pct}%; background: ${barC}; transition: width 1s ease-out;"></div></div>
+            </div>
+        `;
+    }).join('');
+
+    // Fix list
+    const fixList = dep.fix_list || checks.filter(c => !c.passed).sort((a, b) => (b.weight || 0) - (a.weight || 0));
+    $('deploy-fix-list').innerHTML = fixList.slice(0, 6).map((f, i) => `
+        <li class="flex items-center gap-3 p-2 rounded bg-surface-container-low">
+            <span class="material-symbols-outlined text-error text-lg" style="font-variation-settings: 'FILL' 1;">cancel</span>
+            <div class="flex-1">
+                <p class="text-[10px] font-bold">${f.check || f.name || `Fix #${i+1}`}</p>
+                <p class="text-[8px] text-outline uppercase">Severity: ${f.severity || 'Medium'} ${f.effort ? '| Effort: ' + f.effort : ''}</p>
+            </div>
+        </li>
+    `).join('');
+}
+
+// ─── KEYBOARD SHORTCUT: Enter to analyze ────────
+repoInput.addEventListener('keypress', e => { if (e.key === 'Enter') analyzeBtn.click(); });
+tokenInput.addEventListener('keypress', e => { if (e.key === 'Enter') analyzeBtn.click(); });
+</script>
+</body>
+</html>
