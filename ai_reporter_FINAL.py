@@ -1,5 +1,9 @@
 """
-ai_reporter.py  —  CEO-grade AI brief via LangChain + Claude.
+ai_reporter.py  —  CEO-grade AI brief via LangChain + Groq LLM.
+
+This is Agent 6 in the PredictiveEng multi-agent system.
+It consumes the raw data produced by all other agents and generates
+a non-technical executive summary using an LLM.
 """
 
 import os
@@ -8,7 +12,7 @@ from typing import Any
 
 from langchain_groq import ChatGroq
 from langchain_core.prompts import ChatPromptTemplate
-from langchain.output_parsers import ResponseSchema, StructuredOutputParser   # FIXED: was langchain_classic
+from langchain_core.output_parsers import JsonOutputParser
 
 _llm: Any = None
 
@@ -20,7 +24,7 @@ def _get_llm() -> ChatGroq:
         if not api_key:
             raise EnvironmentError("GROQ_API_KEY not set. Add it to your .env file.")
         _llm = ChatGroq(
-            model="llama-3.1-70b-versatile",
+            model="llama-3.3-70b-versatile",
             groq_api_key=api_key,
             max_tokens=1024,
             temperature=0.2,
@@ -28,25 +32,21 @@ def _get_llm() -> ChatGroq:
     return _llm
 
 
-_response_schemas = [
-    ResponseSchema(name="executive_summary",
-                   description="2-3 sentence plain-English summary for a non-technical CEO"),
-    ResponseSchema(name="business_risk_level",
-                   description="One of: CRITICAL, HIGH, MEDIUM, LOW"),
-    ResponseSchema(name="predicted_incident_probability_30d_pct",
-                   description="Integer 0-100: chance of a production incident in 30 days"),
-    ResponseSchema(name="critical_finding",
-                   description="The single most important finding in one sentence"),
-    ResponseSchema(name="health_analogy",
-                   description="One vivid analogy comparing codebase health to something non-technical"),
-    ResponseSchema(name="top_actions",
-                   description='JSON array of 3 objects: [{"action":"...","timeline":"...","estimated_savings_usd":0}]'),
-    ResponseSchema(name="cost_summary",
-                   description='JSON object: {"fix_now_usd":0,"cost_if_delayed_usd":0}'),
-]
-
-_output_parser = StructuredOutputParser.from_response_schemas(_response_schemas)
-_format_instructions = _output_parser.get_format_instructions()
+_JSON_SCHEMA = """\
+Respond with a JSON object using EXACTLY this schema (no markdown fences):
+{{
+  "executive_summary": "2-3 sentence plain-English summary for a non-technical CEO",
+  "business_risk_level": "CRITICAL | HIGH | MEDIUM | LOW",
+  "predicted_incident_probability_30d_pct": <integer 0-100>,
+  "critical_finding": "single most important finding in one sentence",
+  "health_analogy": "one vivid analogy comparing codebase health to something non-technical",
+  "top_actions": [
+    {{"action": "...", "timeline": "...", "estimated_savings_usd": 0}},
+    {{"action": "...", "timeline": "...", "estimated_savings_usd": 0}},
+    {{"action": "...", "timeline": "...", "estimated_savings_usd": 0}}
+  ],
+  "cost_summary": {{"fix_now_usd": 0, "cost_if_delayed_usd": 0}}
+}}"""
 
 _PROMPT = ChatPromptTemplate.from_template(
     """You are a senior engineering consultant writing a concise executive brief for a non-technical CEO.
@@ -88,8 +88,8 @@ CASCADE FAILURE BLAST RADIUS
 
 TECHNICAL DEBT
   Debt Grade         : {debt_grade}
-  Current Debt       : {debt_hours} hours  (${debt_usd_now:,})
-  In 12 months       : ${debt_usd_12m:,}  ({debt_growth_multiple}x today)
+  Current Debt       : {debt_hours} hours  (${debt_usd_now})
+  In 12 months       : ${debt_usd_12m}  ({debt_growth_multiple}x today)
 
 DEPLOYMENT READINESS
   Score  : {deploy_score}/100  ({deploy_label})
@@ -98,12 +98,13 @@ DEPLOYMENT READINESS
 TOP RISKY COMPONENTS
 {components_json}
 
-{format_instructions}
+{json_schema}
 """
 )
 
 
 def generate_ceo_report(raw_data: dict) -> dict:
+    """Generate a CEO-grade executive brief from raw analysis data."""
     try:
         repo   = raw_data.get("repo_info", {})
         hs     = raw_data.get("health_scores", {})
@@ -119,7 +120,8 @@ def generate_ceo_report(raw_data: dict) -> dict:
 
         blast_list  = casc.get("blast_radius_by_file", [])
         top_cascade = blast_list[0] if blast_list else {}
-        missing     = [c["check"] for c in deploy.get("checks", []) if not c.get("passed")][:3]
+        missing     = [c["check"] for c in deploy.get("checks", [])
+                       if not c.get("passed")][:3]
 
         chain    = _PROMPT | _get_llm()
         response = chain.invoke({
@@ -158,24 +160,39 @@ def generate_ceo_report(raw_data: dict) -> dict:
             "cascade_summary":      casc.get("summary", "No cascade data."),
             "debt_grade":           debt.get("debt_grade", "N/A"),
             "debt_hours":           debt.get("principal_hours", 0),
-            "debt_usd_now":         debt.get("principal_usd", 0),
-            "debt_usd_12m":         debt.get("cost_in_12_months_usd", 0),
+            "debt_usd_now":         f"{debt.get('principal_usd', 0):,}",
+            "debt_usd_12m":         f"{debt.get('cost_in_12_months_usd', 0):,}",
             "debt_growth_multiple": debt.get("growth_multiple_12m", 1),
             "deploy_score":         deploy.get("readiness_score", 0),
             "deploy_label":         deploy.get("readiness_label", "UNKNOWN"),
             "deploy_missing":       ", ".join(missing) if missing else "None",
             "components_json":      json.dumps(comps, indent=2),
-            "format_instructions":  _format_instructions,
+            "json_schema":          _JSON_SCHEMA,
         })
 
-        parsed = _output_parser.parse(response.content.strip())
+        # Parse JSON from the LLM response
+        text = response.content.strip()
+        # Strip markdown code fences if present
+        if text.startswith("```"):
+            text = text.split("\n", 1)[-1]
+        if text.endswith("```"):
+            text = text.rsplit("```", 1)[0]
+        text = text.strip()
 
-        for key in ("top_actions", "cost_summary"):
-            if isinstance(parsed.get(key), str):
-                try:
-                    parsed[key] = json.loads(parsed[key])
-                except Exception:
-                    pass
+        parsed = json.loads(text)
+
+        # Ensure nested values are proper types
+        if isinstance(parsed.get("top_actions"), str):
+            try:
+                parsed["top_actions"] = json.loads(parsed["top_actions"])
+            except Exception:
+                pass
+
+        if isinstance(parsed.get("cost_summary"), str):
+            try:
+                parsed["cost_summary"] = json.loads(parsed["cost_summary"])
+            except Exception:
+                pass
 
         try:
             parsed["predicted_incident_probability_30d_pct"] = int(
@@ -187,6 +204,7 @@ def generate_ceo_report(raw_data: dict) -> dict:
         return parsed
 
     except EnvironmentError as e:
-        return {"error": str(e), "executive_summary": "AI report unavailable — GROQ_API_KEY not set."}
+        return {"error": str(e),
+                "executive_summary": "AI report unavailable — GROQ_API_KEY not set."}
     except Exception as e:
         return {"error": f"AI report generation failed: {type(e).__name__}: {e}"}
