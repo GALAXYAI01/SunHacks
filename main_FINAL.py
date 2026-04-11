@@ -221,6 +221,13 @@ def _upd(job_id, pct, msg):
 from pathlib import Path as _Path
 _BASE = _Path(__file__).resolve().parent
 
+@app.get("/login", response_class=Response)
+def login_page():
+    """Serve the login page."""
+    html_path = _BASE / "login.html"
+    return Response(content=html_path.read_text(encoding="utf-8"), media_type="text/html")
+
+
 @app.get("/", response_class=Response)
 def root():
     """Serve the main dashboard HTML."""

@@ -141,8 +141,22 @@
         <button class="p-2 hover:bg-[#1f1f26] rounded-lg transition-all text-[#acaab1]">
             <span class="material-symbols-outlined">settings</span>
         </button>
-        <div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center overflow-hidden">
-            <span class="material-symbols-outlined text-on-primary-fixed text-lg">person</span>
+        <div class="relative group">
+            <button id="user-avatar" class="flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-[#1f1f26] transition-all cursor-pointer">
+                <div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center overflow-hidden">
+                    <span class="material-symbols-outlined text-on-primary-fixed text-lg">person</span>
+                </div>
+                <span id="user-label" class="text-[10px] text-[#acaab1] font-bold max-w-[100px] truncate hidden md:block"></span>
+            </button>
+            <div id="user-dropdown" class="absolute right-0 top-12 w-48 bg-surface-container border border-outline-variant/20 rounded-xl shadow-2xl z-50 hidden overflow-hidden">
+                <div class="p-3 border-b border-outline-variant/10">
+                    <p id="user-dropdown-email" class="text-xs font-bold text-on-surface truncate"></p>
+                    <p id="user-dropdown-role" class="text-[10px] text-outline"></p>
+                </div>
+                <button id="logout-btn" class="w-full flex items-center gap-2 px-3 py-2.5 text-xs text-error font-bold hover:bg-error-container/10 transition-colors">
+                    <span class="material-symbols-outlined text-sm">logout</span> Sign Out
+                </button>
+            </div>
         </div>
     </div>
 </header>
@@ -638,6 +652,28 @@
      SINGLE UNIFIED JAVASCRIPT — ALL API WIRING
      ═══════════════════════════════════════════════════ -->
 <script>
+// ── AUTH GATE ────────────────────────────────────────────────────────
+(function(){
+    if (!localStorage.getItem('pe_auth_token')) {
+        window.location.href = '/login';
+        return;
+    }
+    // Populate user info in header
+    try {
+        const tok = JSON.parse(atob(localStorage.getItem('pe_auth_token')));
+        const userEmail = localStorage.getItem('pe_user_email') || tok.user || 'User';
+        const role = tok.role || 'viewer';
+        setTimeout(() => {
+            const ul = document.getElementById('user-label');
+            const ude = document.getElementById('user-dropdown-email');
+            const udr = document.getElementById('user-dropdown-role');
+            if (ul) ul.textContent = userEmail;
+            if (ude) ude.textContent = userEmail;
+            if (udr) udr.textContent = role.charAt(0).toUpperCase() + role.slice(1);
+        }, 0);
+    } catch(e) {}
+})();
+
 // ── 0. SILENCE CONSOLE DATA EXPOSURE ─────────────────────────────────
 (function(){
     const _error = console.error.bind(console);
@@ -1706,6 +1742,30 @@ renderRepoHistory();
 
 // Enter key to analyze
 repoInput.addEventListener('keydown', e => { if (e.key === 'Enter') analyzeBtn.click(); });
+
+// ── USER DROPDOWN & LOGOUT ──────────────────────────────────────────
+const userAvatar = $('user-avatar');
+const userDropdown = $('user-dropdown');
+const logoutBtn = $('logout-btn');
+
+if (userAvatar && userDropdown) {
+    userAvatar.addEventListener('click', () => {
+        userDropdown.classList.toggle('hidden');
+    });
+    document.addEventListener('click', e => {
+        if (!userAvatar.contains(e.target) && !userDropdown.contains(e.target)) {
+            userDropdown.classList.add('hidden');
+        }
+    });
+}
+
+if (logoutBtn) {
+    logoutBtn.addEventListener('click', () => {
+        localStorage.removeItem('pe_auth_token');
+        localStorage.removeItem('pe_user_email');
+        window.location.href = '/login';
+    });
+}
 </script>
 </body>
 </html>
