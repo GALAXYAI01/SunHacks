@@ -123,9 +123,21 @@
             <div class="w-2 h-2 rounded-full bg-[#4caf50] glow-orb"></div>
             <span class="text-[10px] text-[#4caf50] font-bold uppercase">Encrypted</span>
         </div>
-        <button class="p-2 hover:bg-[#1f1f26] rounded-lg transition-all text-[#acaab1]">
-            <span class="material-symbols-outlined">notifications</span>
-        </button>
+        <div class="relative">
+            <button id="notif-bell" class="p-2 hover:bg-[#1f1f26] rounded-lg transition-all text-[#acaab1] relative">
+                <span class="material-symbols-outlined">notifications</span>
+                <span id="notif-badge" class="absolute -top-0.5 -right-0.5 w-4 h-4 bg-error text-on-error text-[8px] font-black rounded-full flex items-center justify-center hidden">0</span>
+            </button>
+            <div id="notif-dropdown" class="absolute right-0 top-12 w-80 bg-surface-container border border-outline-variant/20 rounded-2xl shadow-2xl z-50 hidden overflow-hidden">
+                <div class="p-4 border-b border-outline-variant/10 flex justify-between items-center">
+                    <span class="text-sm font-bold">Notifications</span>
+                    <button id="notif-clear" class="text-[10px] text-primary font-bold hover:underline">Clear All</button>
+                </div>
+                <div id="notif-list" class="max-h-72 overflow-y-auto">
+                    <p class="p-4 text-xs text-outline text-center">No notifications yet.</p>
+                </div>
+            </div>
+        </div>
         <button class="p-2 hover:bg-[#1f1f26] rounded-lg transition-all text-[#acaab1]">
             <span class="material-symbols-outlined">settings</span>
         </button>
@@ -143,32 +155,32 @@
         <p class="text-[#f9f5fd] font-bold text-xl">System Orbit</p>
         <p class="text-[#7c6ef2] text-[10px] uppercase tracking-widest font-bold">Kinetic Observatory</p>
     </div>
-    <a class="flex items-center gap-3 px-4 py-3 text-[#f9f5fd] bg-[#1f1f26] rounded-xl font-bold border-l-4 border-[#7c6ef2] translate-x-1 transition-transform" href="#">
+    <a id="nav-observatory" data-target="hero-input" class="nav-link flex items-center gap-3 px-4 py-3 text-[#f9f5fd] bg-[#1f1f26] rounded-xl font-bold border-l-4 border-[#7c6ef2] translate-x-1 transition-all duration-200 cursor-pointer" href="#">
         <span class="material-symbols-outlined">insights</span>
         <span class="text-sm tracking-wide uppercase">Observatory</span>
     </a>
-    <a class="flex items-center gap-3 px-4 py-3 text-[#acaab1] hover:text-[#f9f5fd] hover:bg-[#19191f] transition-all duration-200" href="#card-coverage">
+    <a id="nav-repository" data-target="repo-history-section" class="nav-link flex items-center gap-3 px-4 py-3 text-[#acaab1] hover:text-[#f9f5fd] hover:bg-[#19191f] transition-all duration-200 cursor-pointer" href="#">
         <span class="material-symbols-outlined">source</span>
         <span class="text-sm tracking-wide uppercase">Repository</span>
     </a>
-    <a class="flex items-center gap-3 px-4 py-3 text-[#acaab1] hover:text-[#f9f5fd] hover:bg-[#19191f] transition-all duration-200" href="#card-security">
+    <a id="nav-security" data-target="card-security" class="nav-link flex items-center gap-3 px-4 py-3 text-[#acaab1] hover:text-[#f9f5fd] hover:bg-[#19191f] transition-all duration-200 cursor-pointer" href="#">
         <span class="material-symbols-outlined">security</span>
         <span class="text-sm tracking-wide uppercase">Security</span>
     </a>
-    <a class="flex items-center gap-3 px-4 py-3 text-[#acaab1] hover:text-[#f9f5fd] hover:bg-[#19191f] transition-all duration-200" href="#card-burnout">
+    <a id="nav-team" data-target="card-burnout" class="nav-link flex items-center gap-3 px-4 py-3 text-[#acaab1] hover:text-[#f9f5fd] hover:bg-[#19191f] transition-all duration-200 cursor-pointer" href="#">
         <span class="material-symbols-outlined">groups</span>
         <span class="text-sm tracking-wide uppercase">Team</span>
     </a>
-    <a class="flex items-center gap-3 px-4 py-3 text-[#acaab1] hover:text-[#f9f5fd] hover:bg-[#19191f] transition-all duration-200" href="#card-deployment">
+    <a id="nav-deployments" data-target="card-deployment" class="nav-link flex items-center gap-3 px-4 py-3 text-[#acaab1] hover:text-[#f9f5fd] hover:bg-[#19191f] transition-all duration-200 cursor-pointer" href="#">
         <span class="material-symbols-outlined">rocket_launch</span>
         <span class="text-sm tracking-wide uppercase">Deployments</span>
     </a>
     <div class="mt-auto border-t border-outline-variant/10 pt-4">
-        <a class="flex items-center gap-3 px-4 py-3 text-[#acaab1] hover:text-[#f9f5fd] hover:bg-[#19191f] transition-all duration-200" href="#" onclick="alert('Documentation module is currently in development.'); return false;">
+        <a id="nav-docs" class="nav-link flex items-center gap-3 px-4 py-3 text-[#acaab1] hover:text-[#f9f5fd] hover:bg-[#19191f] transition-all duration-200 cursor-pointer" href="#">
             <span class="material-symbols-outlined">menu_book</span>
             <span class="text-sm tracking-wide uppercase">Documentation</span>
         </a>
-        <a class="flex items-center gap-3 px-4 py-3 text-[#acaab1] hover:text-[#f9f5fd] hover:bg-[#19191f] transition-all duration-200" href="#" onclick="window.openChatbot('I need support regarding the PredictiveEng platform.'); return false;">
+        <a id="nav-support" class="nav-link flex items-center gap-3 px-4 py-3 text-[#acaab1] hover:text-[#f9f5fd] hover:bg-[#19191f] transition-all duration-200 cursor-pointer" href="#">
             <span class="material-symbols-outlined">contact_support</span>
             <span class="text-sm tracking-wide uppercase">Support</span>
         </a>
@@ -251,6 +263,22 @@
                 <div id="progress-bar" class="h-full bg-primary shadow-[0_0_12px_rgba(172,163,255,0.4)] transition-all duration-500 ease-out" style="width: 0%"></div>
             </div>
             <p id="progress-message" class="text-xs text-on-surface-variant mt-2">Waiting...</p>
+        </div>
+    </section>
+
+    <!-- ═══════ REPOSITORY HISTORY ═══════ -->
+    <section id="repo-history-section" class="mb-8">
+        <div class="p-6 rounded-xl bg-surface-container border border-outline-variant/10">
+            <div class="flex justify-between items-center mb-4">
+                <div class="flex items-center gap-3">
+                    <span class="material-symbols-outlined text-primary">source</span>
+                    <h2 class="text-lg font-bold">Repository History</h2>
+                </div>
+                <span id="repo-history-count" class="text-[10px] text-outline font-bold uppercase">0 analyses</span>
+            </div>
+            <div id="repo-history-list" class="space-y-3">
+                <p class="text-xs text-outline text-center py-4">No analyses yet. Enter a repository URL above and click Analyze.</p>
+            </div>
         </div>
     </section>
 
@@ -626,6 +654,8 @@ let commitChart = null;
 let debtChart = null;
 let cryptoSession = null;
 let chatHistory = [];
+let analysisHistory = JSON.parse(localStorage.getItem('pe_analysis_history') || '[]');
+let notifications = JSON.parse(localStorage.getItem('pe_notifications') || '[]');
 
 // ── 1. AES-256-GCM ENCRYPTION ────────────────────────────────────────
 async function initCrypto() {
@@ -809,6 +839,9 @@ function startPolling() {
                 analyzeBtn.disabled = false;
                 analyzeBtn.textContent = 'Analyze';
                 await fetchAllResults();
+                // Save to history
+                saveAnalysisToHistory(repoInput.value.trim(), currentJobId);
+                addNotification('Analysis Complete', `${repoInput.value.trim()} analysis finished successfully.`, 'check_circle', '#4caf50');
             } else if (job.status === 'failed') {
                 clearInterval(pollInterval);
                 pollInterval = null;
@@ -816,6 +849,7 @@ function startPolling() {
                 showError(job.error || 'Analysis failed.');
                 analyzeBtn.disabled = false;
                 analyzeBtn.textContent = 'Analyze';
+                addNotification('Analysis Failed', `${repoInput.value.trim()} — ${job.error || 'Unknown error'}`, 'error', '#ff6e84');
             }
         } catch (err) {
             clearInterval(pollInterval);
@@ -867,6 +901,11 @@ function scoreColor(score) {
     if (score < 40) return { text: 'text-error', bg: 'bg-error', hex: '#ff6e84' };
     if (score < 75) return { text: 'text-[#f0a500]', bg: 'bg-[#f0a500]', hex: '#f0a500' };
     return { text: 'text-[#4caf50]', bg: 'bg-[#4caf50]', hex: '#4caf50' };
+}
+function escHtml(s) {
+    const d = document.createElement('div');
+    d.textContent = s;
+    return d.innerHTML;
 }
 function riskBadge(level) {
     const map = {
@@ -1507,6 +1546,166 @@ window.openChatbot = function(msg) {
         chatInput.focus();
     }
 };
+
+// ── SIDEBAR NAVIGATION ──────────────────────────────────────────────
+document.querySelectorAll('.nav-link').forEach(link => {
+    link.addEventListener('click', e => {
+        e.preventDefault();
+        const targetId = link.getAttribute('data-target');
+        const linkId = link.id;
+
+        // Special handlers for docs and support
+        if (linkId === 'nav-docs') {
+            window.openChatbot('Show me the documentation for PredictiveEng platform — how it works, what each section means, and how to interpret the results.');
+            return;
+        }
+        if (linkId === 'nav-support') {
+            window.openChatbot('I need support with the PredictiveEng platform.');
+            return;
+        }
+
+        // Update active state
+        document.querySelectorAll('.nav-link').forEach(l => {
+            l.classList.remove('text-[#f9f5fd]', 'bg-[#1f1f26]', 'rounded-xl', 'font-bold', 'border-l-4', 'border-[#7c6ef2]', 'translate-x-1');
+            l.classList.add('text-[#acaab1]');
+        });
+        link.classList.remove('text-[#acaab1]');
+        link.classList.add('text-[#f9f5fd]', 'bg-[#1f1f26]', 'rounded-xl', 'font-bold', 'border-l-4', 'border-[#7c6ef2]', 'translate-x-1');
+
+        // Scroll to target
+        if (targetId) {
+            const target = $(targetId);
+            if (target) {
+                target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+    });
+});
+
+// ── NOTIFICATION SYSTEM ─────────────────────────────────────────────
+const notifBell = $('notif-bell');
+const notifDropdown = $('notif-dropdown');
+const notifBadge = $('notif-badge');
+const notifList = $('notif-list');
+const notifClear = $('notif-clear');
+
+notifBell.addEventListener('click', () => {
+    notifDropdown.classList.toggle('hidden');
+    // Mark as read
+    notifBadge.classList.add('hidden');
+    notifBadge.textContent = '0';
+});
+
+// Close dropdown when clicking outside
+document.addEventListener('click', e => {
+    if (!notifBell.contains(e.target) && !notifDropdown.contains(e.target)) {
+        notifDropdown.classList.add('hidden');
+    }
+});
+
+notifClear.addEventListener('click', () => {
+    notifications = [];
+    localStorage.setItem('pe_notifications', '[]');
+    renderNotifications();
+});
+
+function addNotification(title, message, icon, color) {
+    const notif = {
+        id: Date.now(),
+        title,
+        message,
+        icon: icon || 'info',
+        color: color || '#aca3ff',
+        time: new Date().toLocaleTimeString('en-US', {hour: '2-digit', minute: '2-digit'}),
+        date: new Date().toLocaleDateString('en-US', {month: 'short', day: 'numeric'}),
+    };
+    notifications.unshift(notif);
+    if (notifications.length > 20) notifications = notifications.slice(0, 20);
+    localStorage.setItem('pe_notifications', JSON.stringify(notifications));
+    renderNotifications();
+    // Show badge
+    const unread = parseInt(notifBadge.textContent || '0') + 1;
+    notifBadge.textContent = unread;
+    notifBadge.classList.remove('hidden');
+}
+
+function renderNotifications() {
+    if (!notifications.length) {
+        notifList.innerHTML = '<p class="p-4 text-xs text-outline text-center">No notifications yet.</p>';
+        return;
+    }
+    notifList.innerHTML = notifications.map(n => `
+        <div class="p-3 border-b border-outline-variant/10 hover:bg-surface-container-high transition-colors cursor-pointer">
+            <div class="flex items-start gap-3">
+                <span class="material-symbols-outlined text-lg mt-0.5" style="color: ${n.color}; font-variation-settings: 'FILL' 1;">${n.icon}</span>
+                <div class="flex-1 min-w-0">
+                    <p class="text-xs font-bold text-on-surface">${n.title}</p>
+                    <p class="text-[10px] text-on-surface-variant truncate">${n.message}</p>
+                    <p class="text-[9px] text-outline mt-1">${n.date} at ${n.time}</p>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+renderNotifications();
+
+// ── REPOSITORY HISTORY ──────────────────────────────────────────────
+function saveAnalysisToHistory(repoUrl, jobId) {
+    const name = repoUrl.replace('https://github.com/', '').replace('https://gitlab.com/', '');
+    const entry = {
+        id: Date.now(),
+        repo_url: repoUrl,
+        name,
+        job_id: jobId,
+        timestamp: new Date().toISOString(),
+        display_time: new Date().toLocaleString('en-US', {month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'}),
+    };
+    analysisHistory.unshift(entry);
+    if (analysisHistory.length > 30) analysisHistory = analysisHistory.slice(0, 30);
+    localStorage.setItem('pe_analysis_history', JSON.stringify(analysisHistory));
+    renderRepoHistory();
+}
+
+function renderRepoHistory() {
+    const list = $('repo-history-list');
+    const count = $('repo-history-count');
+    if (!analysisHistory.length) {
+        list.innerHTML = '<p class="text-xs text-outline text-center py-4">No analyses yet. Enter a repository URL above and click Analyze.</p>';
+        count.textContent = '0 analyses';
+        return;
+    }
+    count.textContent = `${analysisHistory.length} analys${analysisHistory.length === 1 ? 'is' : 'es'}`;
+    list.innerHTML = analysisHistory.map(entry => `
+        <div class="flex items-center gap-4 p-3 rounded-xl bg-surface-container-low hover:bg-surface-container-high transition-colors cursor-pointer group" onclick="loadHistoryEntry('${entry.repo_url}', '${entry.job_id}')">
+            <div class="w-10 h-10 rounded-lg bg-secondary-container/20 flex items-center justify-center flex-shrink-0">
+                <span class="material-symbols-outlined text-primary text-lg">folder</span>
+            </div>
+            <div class="flex-1 min-w-0">
+                <p class="text-sm font-bold text-on-surface truncate">${entry.name}</p>
+                <p class="text-[10px] text-outline">${entry.display_time}</p>
+            </div>
+            <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <span class="text-[10px] text-primary font-bold">View Results →</span>
+            </div>
+        </div>
+    `).join('');
+}
+
+window.loadHistoryEntry = function(repoUrl, jobId) {
+    repoInput.value = repoUrl;
+    currentJobId = jobId;
+    fetchAllResults();
+    // Scroll to dashboard
+    setTimeout(() => {
+        resultsDash.scrollIntoView({behavior: 'smooth', block: 'start'});
+    }, 300);
+};
+
+// Render history on page load
+renderRepoHistory();
+
+// Enter key to analyze
+repoInput.addEventListener('keydown', e => { if (e.key === 'Enter') analyzeBtn.click(); });
 </script>
 </body>
 </html>

@@ -218,10 +218,18 @@ def _upd(job_id, pct, msg):
     jobs[job_id].update({"status": "running", "progress_pct": pct, "message": msg})
 
 
-# ── Endpoints ─────────────────────────────────────────────────────────
+from pathlib import Path as _Path
+_BASE = _Path(__file__).resolve().parent
 
-@app.get("/")
+@app.get("/", response_class=Response)
 def root():
+    """Serve the main dashboard HTML."""
+    html_path = _BASE / "index.html"
+    return Response(content=html_path.read_text(encoding="utf-8"), media_type="text/html")
+
+
+@app.get("/api/status")
+def api_status():
     return {
         "service":  "Predictive Engineering Intelligence Platform",
         "version":  "3.0.0",
