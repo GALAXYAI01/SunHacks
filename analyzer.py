@@ -16,6 +16,7 @@ import json
 import shutil
 import tempfile
 import requests
+import concurrent.futures
 from datetime import datetime
 from collections import defaultdict
 
@@ -88,7 +89,7 @@ class GitHubAnalyzer:
         else:
             clone_url = f"https://github.com/{owner}/{repo}.git"
         try:
-            Repo.clone_from(clone_url, tmp, depth=100)
+            Repo.clone_from(clone_url, tmp, depth=30)
         except Exception as e:
             # Clean up temp dir on failure
             shutil.rmtree(tmp, ignore_errors=True)
@@ -365,32 +366,52 @@ class GitHubAnalyzer:
 
         tmp = None
         try:
-            tmp          = self.clone_repo(owner, repo_name)
-            commit_data  = self.analyze_commits(tmp)
-            quality_data = self.analyze_code_quality(tmp)
-            health_data  = self.calculate_health_scores(
-                               commit_data, quality_data, repo_info)
-            security     = scan_security(tmp)
-            dep_risk     = analyze_dependencies(tmp)
-            test_cov     = self.analyze_test_coverage(tmp)
+            tmp = self.clone_repo(owner, repo_name)
 
-            # Pass raw commit list to burnout detector
-            raw_commits  = _extract_raw_commits(tmp)
-            burnout      = analyze_burnout(raw_commits)
+            # ── Stage 1: commit + quality analysis run in parallel ─────
+            with concurrent.futures.ThreadPoolExecutor(max_workers=2) as pool:
+                f_commit  = pool.submit(self.analyze_commits, tmp)
+                f_quality = pool.submit(self.analyze_code_quality, tmp)
 
-            # Pass file churn to cascade + debt
-            file_churn   = commit_data.get("_file_churn", {})
-            cascade      = analyze_cascade(tmp, file_churn=file_churn)
+                commit_data  = f_commit.result()
+                quality_data = f_quality.result()
+
+            health_data = self.calculate_health_scores(
+                              commit_data, quality_data, repo_info)
+            file_churn  = commit_data.get("_file_churn", {})
+
+            # ── Stage 2: independent modules run in parallel ───────────
+            # Security, test coverage, cascade, and burnout do not
+            # depend on each other — run all 4 at the same time.
+            with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool:
+                f_sec     = pool.submit(scan_security, tmp)
+                f_test    = pool.submit(self.analyze_test_coverage, tmp)
+                f_cascade = pool.submit(analyze_cascade, tmp, file_churn)
+                f_burnout = pool.submit(
+                    lambda: analyze_burnout(_extract_raw_commits(tmp)))
+
+                security     = f_sec.result()
+                test_cov     = f_test.result()
+                cascade_data = f_cascade.result()
+                burnout      = f_burnout.result()
 
             # Enrich cascade with function-level detail from quality analysis
-            cascade      = _enrich_cascade(cascade, quality_data)
+            cascade = _enrich_cascade(cascade_data, quality_data)
 
-            debt         = calculate_debt(tmp, file_churn,
-                                          test_cov.get("test_to_source_ratio_pct", 0))
-            deploy       = check_deployment_readiness(
-                               tmp,
-                               has_tests=test_cov.get("test_files", 0) > 0,
-                               security_label=security.get("security_label","UNKNOWN"))
+            # ── Stage 3: modules that depend on stage-2 results ────────
+            with concurrent.futures.ThreadPoolExecutor(max_workers=3) as pool:
+                f_dep    = pool.submit(analyze_dependencies, tmp)
+                f_deploy = pool.submit(
+                    check_deployment_readiness, tmp,
+                    test_cov.get("test_files", 0) > 0,
+                    security.get("security_label", "UNKNOWN"))
+                f_debt   = pool.submit(
+                    calculate_debt, tmp, file_churn,
+                    test_cov.get("test_to_source_ratio_pct", 0))
+
+                dep_risk = f_dep.result()
+                deploy   = f_deploy.result()
+                debt     = f_debt.result()
 
             return {
                 "repo_info":            repo_info,

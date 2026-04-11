@@ -297,7 +297,10 @@
     </section>
 
     <!-- ═══════ RESULTS DASHBOARD GRID ═══════ -->
-    <div id="results-dashboard" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 hidden">
+    <div id="results-dashboard" class="hidden">
+
+    <!-- ═══ VIEW: OBSERVATORY (all cards) ═══ -->
+    <div id="view-observatory" class="view-panel grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
         <!-- Card 1: Overall Health -->
         <div id="card-health" class="col-span-1 p-6 rounded-xl bg-surface-container flex flex-col items-center justify-center gap-4 fade-in">
@@ -645,7 +648,68 @@
                 <ul id="deploy-fix-list" class="space-y-2"></ul>
             </div>
         </div>
+
+    </div><!-- /view-observatory -->
+
+    <!-- ═══ VIEW: REPOSITORY ═══ -->
+    <div id="view-repository" class="view-panel hidden space-y-6">
+        <div class="p-4 rounded-xl bg-surface-container border border-outline-variant/10">
+            <div class="flex items-center gap-3 mb-1">
+                <span class="material-symbols-outlined text-primary">source</span>
+                <h2 class="text-lg font-bold">Repository Analysis</h2>
+            </div>
+            <p class="text-xs text-on-surface-variant">Component-level risk telemetry and code coverage for this repository.</p>
+        </div>
+        <div id="repo-view-components"></div>
+        <div id="repo-view-coverage"></div>
     </div>
+
+    <!-- ═══ VIEW: SECURITY ═══ -->
+    <div id="view-security" class="view-panel hidden space-y-6">
+        <div class="p-4 rounded-xl bg-surface-container border border-outline-variant/10">
+            <div class="flex items-center gap-3 mb-1">
+                <span class="material-symbols-outlined text-primary">security</span>
+                <h2 class="text-lg font-bold">Security Center</h2>
+            </div>
+            <p class="text-xs text-on-surface-variant">Vulnerability scanning, dependency health, and cascade risk analysis.</p>
+        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div id="sec-view-scan"></div>
+            <div id="sec-view-cascade"></div>
+        </div>
+    </div>
+
+    <!-- ═══ VIEW: TEAM ═══ -->
+    <div id="view-team" class="view-panel hidden space-y-6">
+        <div class="p-4 rounded-xl bg-surface-container border border-outline-variant/10">
+            <div class="flex items-center gap-3 mb-1">
+                <span class="material-symbols-outlined text-primary">groups</span>
+                <h2 class="text-lg font-bold">Team Health</h2>
+            </div>
+            <p class="text-xs text-on-surface-variant">Bus factor analysis, developer burnout tracking, and workload distribution.</p>
+        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div id="team-view-bus"></div>
+            <div id="team-view-burnout"></div>
+        </div>
+    </div>
+
+    <!-- ═══ VIEW: DEPLOYMENTS ═══ -->
+    <div id="view-deployments" class="view-panel hidden space-y-6">
+        <div class="p-4 rounded-xl bg-surface-container border border-outline-variant/10">
+            <div class="flex items-center gap-3 mb-1">
+                <span class="material-symbols-outlined text-primary">rocket_launch</span>
+                <h2 class="text-lg font-bold">Deployment Center</h2>
+            </div>
+            <p class="text-xs text-on-surface-variant">Deployment readiness scoring and technical debt impact analysis.</p>
+        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div id="deploy-view-readiness"></div>
+            <div id="deploy-view-debt"></div>
+        </div>
+    </div>
+
+    </div><!-- /results-dashboard -->
 </main>
 
 <!-- ═══════════════════════════════════════════════════
@@ -1583,38 +1647,112 @@ window.openChatbot = function(msg) {
     }
 };
 
-// ── SIDEBAR NAVIGATION ──────────────────────────────────────────────
+// ── SIDEBAR NAVIGATION (view-switching) ─────────────────────────────
+
+// Map nav IDs to which cards each view should clone/show
+const viewCardMap = {
+    'nav-observatory':  null, // shows the default observatory view (all cards)
+    'nav-repository':   { view: 'view-repository',   slots: { 'repo-view-components': 'card-components', 'repo-view-coverage': 'card-coverage' } },
+    'nav-security':     { view: 'view-security',     slots: { 'sec-view-scan': 'card-security', 'sec-view-cascade': 'card-cascade' } },
+    'nav-team':         { view: 'view-team',          slots: { 'team-view-bus': 'card-busfactor', 'team-view-burnout': 'card-burnout' } },
+    'nav-deployments':  { view: 'view-deployments',   slots: { 'deploy-view-readiness': 'card-deployment', 'deploy-view-debt': 'card-debt' } },
+};
+
+let currentView = 'nav-observatory';
+
+function switchView(navId) {
+    // 1. Update sidebar active state
+    document.querySelectorAll('.nav-link').forEach(l => {
+        l.classList.remove('text-[#f9f5fd]', 'bg-[#1f1f26]', 'rounded-xl', 'font-bold', 'border-l-4', 'border-[#7c6ef2]', 'translate-x-1');
+        l.classList.add('text-[#acaab1]');
+    });
+    const activeLink = $(navId);
+    if (activeLink) {
+        activeLink.classList.remove('text-[#acaab1]');
+        activeLink.classList.add('text-[#f9f5fd]', 'bg-[#1f1f26]', 'rounded-xl', 'font-bold', 'border-l-4', 'border-[#7c6ef2]', 'translate-x-1');
+    }
+
+    // 2. Hide all view panels
+    document.querySelectorAll('.view-panel').forEach(p => p.classList.add('hidden'));
+
+    // 3. Show the correct view
+    const mapping = viewCardMap[navId];
+    if (!mapping) {
+        // Observatory: show default view with all cards
+        const obs = $('view-observatory');
+        if (obs) obs.classList.remove('hidden');
+    } else {
+        const viewEl = $(mapping.view);
+        if (viewEl) {
+            // Move cards into the view slots
+            for (const [slotId, cardId] of Object.entries(mapping.slots)) {
+                const slot = $(slotId);
+                const card = $(cardId);
+                if (slot && card) {
+                    slot.innerHTML = '';
+                    slot.appendChild(card);
+                }
+            }
+            viewEl.classList.remove('hidden');
+        }
+    }
+
+    // 4. Toggle hero/repo-history visibility
+    const heroInput = $('hero-input');
+    const repoHistory = $('repo-history-section');
+    if (navId === 'nav-observatory') {
+        if (heroInput) heroInput.classList.remove('hidden');
+        if (repoHistory) repoHistory.classList.remove('hidden');
+    } else if (navId === 'nav-repository') {
+        if (heroInput) heroInput.classList.add('hidden');
+        if (repoHistory) repoHistory.classList.remove('hidden');
+    } else {
+        if (heroInput) heroInput.classList.add('hidden');
+        if (repoHistory) repoHistory.classList.add('hidden');
+    }
+
+    currentView = navId;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// When switching BACK to observatory, move cards back to original grid
+function restoreObservatoryCards() {
+    const obsGrid = $('view-observatory');
+    if (!obsGrid) return;
+    const cardOrder = ['card-health','card-ceo','card-components','card-security','card-busfactor','card-coverage','card-burnout','card-cascade','card-debt','card-deployment'];
+    cardOrder.forEach(id => {
+        const card = $(id);
+        if (card && card.parentElement !== obsGrid) {
+            obsGrid.appendChild(card);
+        }
+    });
+}
+
 document.querySelectorAll('.nav-link').forEach(link => {
     link.addEventListener('click', e => {
         e.preventDefault();
-        const targetId = link.getAttribute('data-target');
-        const linkId = link.id;
+        const navId = link.id;
 
         // Special handlers for docs and support
-        if (linkId === 'nav-docs') {
-            window.openChatbot('Show me the documentation for PredictiveEng platform — how it works, what each section means, and how to interpret the results.');
+        if (navId === 'nav-docs') {
+            window.openChatbot('Show me the documentation for PredictiveEng platform \u2014 how it works, what each section means, and how to interpret the results.');
             return;
         }
-        if (linkId === 'nav-support') {
+        if (navId === 'nav-support') {
             window.openChatbot('I need support with the PredictiveEng platform.');
             return;
         }
 
-        // Update active state
-        document.querySelectorAll('.nav-link').forEach(l => {
-            l.classList.remove('text-[#f9f5fd]', 'bg-[#1f1f26]', 'rounded-xl', 'font-bold', 'border-l-4', 'border-[#7c6ef2]', 'translate-x-1');
-            l.classList.add('text-[#acaab1]');
-        });
-        link.classList.remove('text-[#acaab1]');
-        link.classList.add('text-[#f9f5fd]', 'bg-[#1f1f26]', 'rounded-xl', 'font-bold', 'border-l-4', 'border-[#7c6ef2]', 'translate-x-1');
+        // Restore cards to observatory before switching
+        restoreObservatoryCards();
 
-        // Scroll to target
-        if (targetId) {
-            const target = $(targetId);
-            if (target) {
-                target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }
+        // If no analysis yet, show a prompt for non-observatory views
+        if (navId !== 'nav-observatory' && navId !== 'nav-repository' && resultsDash.classList.contains('hidden')) {
+            alert('Please run an analysis first to see this section.');
+            return;
         }
+
+        switchView(navId);
     });
 });
 
