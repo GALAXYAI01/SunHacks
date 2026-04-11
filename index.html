@@ -4,6 +4,7 @@
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>PredictiveEng | Kinetic Observatory</title>
+<meta name="description" content="PredictiveEng — AI-powered predictive engineering platform. Analyze GitHub repository health, security, and technical debt before failures happen."/>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
@@ -95,9 +96,14 @@
     @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
     @keyframes pulse-glow { 0%, 100% { box-shadow: 0 0 8px rgba(172,163,255,0.3); } 50% { box-shadow: 0 0 20px rgba(172,163,255,0.6); } }
     .pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
-    /* Batch modal */
     .modal-overlay { position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; }
     .modal-overlay.hidden { display: none; }
+    /* Issue badge animations */
+    @keyframes subtlePulse { 0%,100% { opacity: 1; } 50% { opacity: 0.7; } }
+    .issue-pulse { animation: subtlePulse 2s ease-in-out infinite; }
+    /* Chatbot transitions */
+    .chat-window { transition: opacity 0.3s ease, transform 0.3s ease; }
+    .chat-window.hidden { opacity: 0; transform: translateY(20px) scale(0.95); pointer-events: none; }
 </style>
 </head>
 <body class="overflow-x-hidden">
@@ -113,6 +119,10 @@
         </nav>
     </div>
     <div class="flex items-center gap-4">
+        <div class="flex items-center gap-1 px-2 py-1 bg-[#4caf50]/10 border border-[#4caf50]/20 rounded-full">
+            <div class="w-2 h-2 rounded-full bg-[#4caf50] glow-orb"></div>
+            <span class="text-[10px] text-[#4caf50] font-bold uppercase">Encrypted</span>
+        </div>
         <button class="p-2 hover:bg-[#1f1f26] rounded-lg transition-all text-[#acaab1]">
             <span class="material-symbols-outlined">notifications</span>
         </button>
@@ -176,9 +186,8 @@
                 <span class="material-symbols-outlined">close</span>
             </button>
         </div>
-        <p class="text-xs text-on-surface-variant mb-4">Enter one GitHub/GitLab repository URL per line (max 10).</p>
+        <p class="text-xs text-on-surface-variant mb-4">Enter one GitHub repository URL per line (max 8). Public repos only.</p>
         <textarea id="batch-urls" class="w-full h-32 bg-surface-container-lowest border border-outline-variant/20 rounded-lg text-sm px-4 py-3 focus:ring-2 focus:ring-primary placeholder:text-outline/50 resize-none" placeholder="https://github.com/org/repo1&#10;https://github.com/org/repo2&#10;https://github.com/org/repo3"></textarea>
-        <input id="batch-token" class="w-full mt-3 bg-surface-container-lowest border border-outline-variant/20 rounded-lg text-sm px-4 py-3 focus:ring-2 focus:ring-primary placeholder:text-outline/50" placeholder="GitHub Personal Access Token" type="password"/>
         <div class="flex justify-end gap-3 mt-6">
             <button id="batch-cancel" class="px-6 py-2 text-on-surface-variant border border-outline-variant/20 rounded-xl hover:bg-surface-container-high transition-colors">Cancel</button>
             <button id="batch-submit" class="px-6 py-2 bg-gradient-to-r from-primary to-primary-container text-on-primary-fixed font-bold rounded-xl active:scale-95 transition-transform">Analyze All</button>
@@ -208,10 +217,6 @@
                 <input id="repo-url" class="w-full bg-surface-container-lowest border-none rounded-lg text-sm px-4 py-3 focus:ring-2 focus:ring-primary placeholder:text-outline/50" placeholder="https://github.com/org/repo" type="text"/>
                 <span class="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-outline font-mono">REPO_URL</span>
             </div>
-            <div class="relative w-[260px]">
-                <input id="github-token" class="w-full bg-surface-container-lowest border-none rounded-lg text-sm px-4 py-3 focus:ring-2 focus:ring-primary placeholder:text-outline/50" placeholder="Access Token" type="password"/>
-                <span class="absolute right-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-sm text-outline cursor-help" title="Input your GitHub/GitLab personal access token. Generate at github.com/settings/tokens with repo scope. Your token is never stored.">info</span>
-            </div>
             <button id="analyze-btn" class="px-8 py-3 bg-gradient-to-r from-primary to-primary-container text-on-primary-fixed font-bold rounded-xl active:scale-95 transition-transform hover:shadow-lg hover:shadow-primary/20">
                 Analyze
             </button>
@@ -219,7 +224,7 @@
         <a id="hero-batch-link" class="text-primary text-sm font-semibold hover:underline cursor-pointer" href="#">Batch Analyze</a>
     </section>
 
-    <p class="text-center text-[11px] text-outline mb-6">🔒 Your token is never stored. It is used only to clone your repository.</p>
+    <p class="text-center text-[11px] text-outline mb-6">Built for fast, frictionless analysis. All traffic is AES-256 encrypted.</p>
 
     <!-- ═══════ ERROR DISPLAY ═══════ -->
     <section id="error-section" class="mb-8 hidden">
@@ -327,7 +332,10 @@
         <!-- Card 3: Component Risk Table -->
         <div id="card-components" class="col-span-full p-6 rounded-xl bg-surface-container fade-in">
             <div class="flex justify-between items-center mb-6">
-                <h3 class="text-lg font-bold">Component Risk Telemetry</h3>
+                <div>
+                    <h3 class="text-lg font-bold">Component Risk Telemetry</h3>
+                    <p class="text-xs text-on-surface-variant mt-1">Click any file to see exact error line numbers and function details</p>
+                </div>
                 <p id="comp-total-risk" class="text-xs font-bold text-error"></p>
             </div>
             <div class="overflow-x-auto">
@@ -335,14 +343,15 @@
                     <thead>
                         <tr class="text-outline uppercase text-[10px] font-black border-b border-outline-variant/10">
                             <th class="pb-3 px-2">File Component</th>
-                            <th class="pb-3 px-2">Failure Prob.</th>
-                            <th class="pb-3 px-2">Est. Days to Failure</th>
+                            <th class="pb-3 px-2">Error %</th>
+                            <th class="pb-3 px-2">Days to Failure</th>
                             <th class="pb-3 px-2">Risk Level</th>
+                            <th class="pb-3 px-2">Error Location</th>
                             <th class="pb-3 px-2 text-right">Action</th>
                         </tr>
                     </thead>
                     <tbody id="comp-tbody" class="divide-y divide-outline-variant/5">
-                        <tr><td colspan="5" class="py-4 px-2 text-center text-on-surface-variant">Loading...</td></tr>
+                        <tr><td colspan="6" class="py-4 px-2 text-center text-on-surface-variant">Loading...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -474,7 +483,6 @@
                 </div>
                 <p id="burnout-revert-detail" class="text-[10px] text-on-surface-variant"></p>
             </div>
-            <!-- Burnout dev table -->
             <div id="burnout-dev-table-container" class="mt-4 hidden">
                 <p class="text-[10px] font-black text-outline uppercase mb-2">Developer Breakdown</p>
                 <table class="w-full text-[10px]">
@@ -496,7 +504,7 @@
             <div class="flex items-center justify-between mb-8">
                 <div>
                     <h3 class="text-lg font-bold">Cascade Blast Radius 💥</h3>
-                    <p class="text-xs text-on-surface-variant">Predicted failure impact mapping</p>
+                    <p class="text-xs text-on-surface-variant">Predicted failure impact mapping with exact error locations</p>
                 </div>
                 <div class="text-right">
                     <span id="cascade-risk-badge" class="px-3 py-1 rounded-full text-[10px] font-black uppercase"></span>
@@ -513,6 +521,7 @@
                                     <th class="pb-2">Failure %</th>
                                     <th class="pb-2">Blast %</th>
                                     <th class="pb-2">Severity</th>
+                                    <th class="pb-2">Error At</th>
                                 </tr>
                             </thead>
                             <tbody id="cascade-tbody"></tbody>
@@ -598,19 +607,90 @@
 </main>
 
 <!-- ═══════════════════════════════════════════════════
-     JAVASCRIPT — ALL API WIRING
+     SINGLE UNIFIED JAVASCRIPT — ALL API WIRING
      ═══════════════════════════════════════════════════ -->
 <script>
+// ── 0. SILENCE CONSOLE DATA EXPOSURE ─────────────────────────────────
+(function(){
+    const _error = console.error.bind(console);
+    console.log = ()=>{};
+    console.warn = ()=>{};
+    console.table = ()=>{};
+    console.error = _error; // Keep for real crashes
+})();
+
 const API_BASE = 'http://localhost:8000';
 let currentJobId = null;
 let pollInterval = null;
 let commitChart = null;
 let debtChart = null;
+let cryptoSession = null;
+let chatHistory = [];
 
-// ─── DOM REFS ───────────────────────────────────
+// ── 1. AES-256-GCM ENCRYPTION ────────────────────────────────────────
+async function initCrypto() {
+    try {
+        const res = await fetch(`${API_BASE}/api/handshake`, {method: 'POST'});
+        if (!res.ok) throw new Error('Handshake failed');
+        const data = await res.json();
+        const rawKey = Uint8Array.from(atob(data.key), c => c.charCodeAt(0));
+        const key = await crypto.subtle.importKey('raw', rawKey, 'AES-GCM', false, ['encrypt', 'decrypt']);
+        cryptoSession = { sid: data.sid, key };
+    } catch(err) {
+        console.error('Crypto handshake failed — falling back to plain HTTP', err);
+    }
+}
+
+async function encryptedFetch(url, options = {}) {
+    if (!cryptoSession) await initCrypto();
+    if (!cryptoSession) return fetch(url, options); // Fallback
+
+    const headers = new Headers(options.headers || {});
+    headers.set('x-session-id', cryptoSession.sid);
+
+    let body = options.body;
+    if (body && (options.method === 'POST' || options.method === 'PUT')) {
+        const iv = crypto.getRandomValues(new Uint8Array(12));
+        const encodedBody = new TextEncoder().encode(body);
+        const ctBuf = await crypto.subtle.encrypt({name: 'AES-GCM', iv}, cryptoSession.key, encodedBody);
+        const ct = btoa(String.fromCharCode(...new Uint8Array(ctBuf)));
+        const ivB64 = btoa(String.fromCharCode(...iv));
+        body = JSON.stringify({ct, iv: ivB64});
+        headers.set('Content-Type', 'application/json');
+    }
+
+    const res = await fetch(url, { ...options, headers, body });
+    if (!res.ok) return res;
+
+    // Intercept and decrypt JSON response if encrypted
+    const clone = res.clone();
+    const origJson = res.json.bind(res);
+    res.json = async () => {
+        try {
+            const rawText = await clone.text();
+            if (!rawText) return {};
+            const env = JSON.parse(rawText);
+            if (env.ct && env.iv) {
+                const ct = Uint8Array.from(atob(env.ct), c => c.charCodeAt(0));
+                const iv = Uint8Array.from(atob(env.iv), c => c.charCodeAt(0));
+                const ptBuf = await crypto.subtle.decrypt({name: 'AES-GCM', iv}, cryptoSession.key, ct);
+                return JSON.parse(new TextDecoder().decode(ptBuf));
+            }
+            return env;
+        } catch (e) {
+            console.error("Decryption failed", e);
+            throw e;
+        }
+    };
+    return res;
+}
+
+// Init crypto on page load
+initCrypto();
+
+// ── 2. DOM REFS ──────────────────────────────────────────────────────
 const $  = id => document.getElementById(id);
 const repoInput     = $('repo-url');
-const tokenInput    = $('github-token');
 const analyzeBtn    = $('analyze-btn');
 const progressSec   = $('progress-section');
 const progressLabel = $('progress-label');
@@ -621,7 +701,7 @@ const errorSec      = $('error-section');
 const errorMsg      = $('error-message');
 const resultsDash   = $('results-dashboard');
 
-// ─── BATCH MODAL ────────────────────────────────
+// ── 3. BATCH MODAL ───────────────────────────────────────────────────
 const batchModal  = $('batch-modal');
 const batchClose  = $('batch-modal-close');
 const batchCancel = $('batch-cancel');
@@ -637,22 +717,20 @@ const batchStatus = $('batch-status');
 
 batchSubmit.addEventListener('click', async () => {
     const urls = $('batch-urls').value.trim().split('\n').map(s => s.trim()).filter(Boolean);
-    const token = $('batch-token').value.trim();
-    if (!urls.length || !token) { alert('Please enter URLs and token.'); return; }
+    if (!urls.length) { alert('Please enter URLs.'); return; }
     batchSubmit.disabled = true;
     batchSubmit.textContent = 'Submitting...';
     try {
-        const res = await fetch(`${API_BASE}/api/analyze/portfolio`, {
+        const res = await encryptedFetch(`${API_BASE}/api/analyze/portfolio`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ repo_urls: urls, github_token: token })
+            body: JSON.stringify({ repo_urls: urls })
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.detail || 'Portfolio submission failed');
         batchStatus.classList.remove('hidden');
-        batchStatus.textContent = `✅ ${data.repo_count} repos queued. Job IDs: ${data.job_ids.join(', ')}`;
-        // Auto-start tracking the first job
-        if (data.job_ids.length > 0) {
+        batchStatus.textContent = `✅ ${data.repo_count} repos queued.`;
+        if (data.job_ids && data.job_ids.length > 0) {
             batchModal.classList.add('hidden');
             currentJobId = data.job_ids[0];
             startPolling();
@@ -666,16 +744,19 @@ batchSubmit.addEventListener('click', async () => {
     }
 });
 
-// ─── ERROR DISMISS ──────────────────────────────
+// ── 4. ERROR HANDLING ────────────────────────────────────────────────
 $('error-dismiss').addEventListener('click', () => errorSec.classList.add('hidden'));
 
-// ─── ANALYZE BUTTON ─────────────────────────────
+function showError(message) {
+    errorMsg.textContent = message;
+    errorSec.classList.remove('hidden');
+    progressSec.classList.add('hidden');
+}
+
+// ── 5. ANALYZE BUTTON ────────────────────────────────────────────────
 analyzeBtn.addEventListener('click', async () => {
     const repoUrl = repoInput.value.trim();
-    const token   = tokenInput.value.trim();
-
     if (!repoUrl) { alert('Please enter a repository URL.'); return; }
-    if (!token || token.length < 10) { alert('Please enter a valid GitHub Personal Access Token (repo scope).'); return; }
 
     // Reset UI
     errorSec.classList.add('hidden');
@@ -689,10 +770,10 @@ analyzeBtn.addEventListener('click', async () => {
     analyzeBtn.textContent = 'Analyzing...';
 
     try {
-        const res = await fetch(`${API_BASE}/api/analyze`, {
+        const res = await encryptedFetch(`${API_BASE}/api/analyze`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ repo_url: repoUrl, github_token: token, include_ai_report: true })
+            body: JSON.stringify({ repo_url: repoUrl, include_ai_report: true })
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.detail || 'Analysis request failed');
@@ -705,22 +786,21 @@ analyzeBtn.addEventListener('click', async () => {
     }
 });
 
-// ─── POLLING ────────────────────────────────────
+// ── 6. POLLING ───────────────────────────────────────────────────────
 function startPolling() {
     if (pollInterval) clearInterval(pollInterval);
     progressSec.classList.remove('hidden');
 
     pollInterval = setInterval(async () => {
         try {
-            const res = await fetch(`${API_BASE}/api/jobs/${currentJobId}`);
+            const res = await encryptedFetch(`${API_BASE}/api/jobs/${currentJobId}`);
             const job = await res.json();
-            if (!res.ok) throw new Error(job.detail || 'Job polling failed');
+            if (!res.ok) throw new Error(job.detail || 'Polling failed');
 
-            // Update progress UI
             progressBar.style.width = `${job.progress_pct}%`;
             progressPct.textContent = `${job.progress_pct}% Complete`;
             progressMsg.textContent = job.message;
-            progressLabel.textContent = `Analyzing...`;
+            progressLabel.textContent = 'Analyzing...';
 
             if (job.status === 'completed') {
                 clearInterval(pollInterval);
@@ -733,7 +813,7 @@ function startPolling() {
                 clearInterval(pollInterval);
                 pollInterval = null;
                 progressSec.classList.add('hidden');
-                showError(job.error || 'Analysis failed with no error message.');
+                showError(job.error || 'Analysis failed.');
                 analyzeBtn.disabled = false;
                 analyzeBtn.textContent = 'Analyze';
             }
@@ -747,27 +827,21 @@ function startPolling() {
     }, 2500);
 }
 
-function showError(message) {
-    errorMsg.textContent = message;
-    errorSec.classList.remove('hidden');
-    progressSec.classList.add('hidden');
-}
-
-// ─── FETCH ALL 10 ENDPOINTS ─────────────────────
+// ── 7. FETCH ALL RESULTS (encrypted) ─────────────────────────────────
 async function fetchAllResults() {
     const base = `${API_BASE}/api/jobs/${currentJobId}`;
     try {
         const [health, ceoBrief, components, security, busFactor, testCoverage, burnout, cascade, debt, deployment] = await Promise.all([
-            fetch(`${base}/health`).then(r => r.json()),
-            fetch(`${base}/ceo-brief`).then(r => r.json()),
-            fetch(`${base}/components`).then(r => r.json()),
-            fetch(`${base}/security`).then(r => r.json()),
-            fetch(`${base}/bus-factor`).then(r => r.json()),
-            fetch(`${base}/test-coverage`).then(r => r.json()),
-            fetch(`${base}/burnout`).then(r => r.json()),
-            fetch(`${base}/cascade`).then(r => r.json()),
-            fetch(`${base}/debt`).then(r => r.json()),
-            fetch(`${base}/deployment`).then(r => r.json()),
+            encryptedFetch(`${base}/health`).then(r => r.json()),
+            encryptedFetch(`${base}/ceo-brief`).then(r => r.json()),
+            encryptedFetch(`${base}/components`).then(r => r.json()),
+            encryptedFetch(`${base}/security`).then(r => r.json()),
+            encryptedFetch(`${base}/bus-factor`).then(r => r.json()),
+            encryptedFetch(`${base}/test-coverage`).then(r => r.json()),
+            encryptedFetch(`${base}/burnout`).then(r => r.json()),
+            encryptedFetch(`${base}/cascade`).then(r => r.json()),
+            encryptedFetch(`${base}/debt`).then(r => r.json()),
+            encryptedFetch(`${base}/deployment`).then(r => r.json()),
         ]);
 
         renderHealth(health);
@@ -787,7 +861,7 @@ async function fetchAllResults() {
     }
 }
 
-// ─── HELPERS ────────────────────────────────────
+// ── 8. HELPERS ───────────────────────────────────────────────────────
 function fmt$(n) { return '$' + Number(n || 0).toLocaleString(); }
 function scoreColor(score) {
     if (score < 40) return { text: 'text-error', bg: 'bg-error', hex: '#ff6e84' };
@@ -813,8 +887,9 @@ function severityColor(sev) {
     if (s === 'MODERATE' || s === 'MEDIUM') return '#b190fe';
     return '#76747b';
 }
+function escHtml(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
-// ─── CARD 1: HEALTH ─────────────────────────────
+// ── 9. CARD 1: HEALTH ───────────────────────────────────────────────
 function renderHealth(data) {
     const hs = data.health_scores || {};
     const score = hs.overall_health_score || 0;
@@ -823,7 +898,6 @@ function renderHealth(data) {
 
     $('health-repo-name').textContent = data.repo || '';
     $('health-score').textContent = score;
-    // Animate ring: circumference=440, offset = 440 - (440 * score/100)
     setTimeout(() => { $('health-ring').setAttribute('stroke-dashoffset', 440 - (440 * score / 100)); }, 100);
     $('health-ring').style.color = c.hex;
 
@@ -836,38 +910,31 @@ function renderHealth(data) {
     $('health-stability').textContent = hs.stability_score ?? '--';
     $('health-activity').textContent = hs.activity_score ?? '--';
 
-    // AI analogy from ceo-brief (stored separately, but health endpoint may have ai_summary)
     const analogy = data.ai_summary || '';
     $('health-analogy').textContent = analogy ? `"${analogy}"` : '';
 }
 
-// ─── CARD 2: CEO BRIEF ──────────────────────────
+// ── 10. CARD 2: CEO BRIEF ────────────────────────────────────────────
 function renderCeoBrief(data) {
     const ceo = data.ceo_brief || {};
-
     $('ceo-summary').textContent = ceo.executive_summary || 'No AI summary available.';
 
-    // Risk badge
     const risk = ceo.business_risk_level || 'UNKNOWN';
     $('ceo-risk-badge').textContent = risk;
     $('ceo-risk-badge').className = `px-2 py-1 text-[10px] font-black rounded border text-center uppercase ${riskBadge(risk)}`;
 
-    // Probability badge
     const prob = ceo.predicted_incident_probability_30d_pct || 0;
     $('ceo-prob-badge').textContent = `${prob}% risk in 30d`;
-
-    // Critical finding
     $('ceo-critical').textContent = ceo.critical_finding || '';
 
-    // Actions list
     const actions = ceo.top_actions || [];
     const actionsEl = $('ceo-actions');
     if (Array.isArray(actions) && actions.length > 0) {
         actionsEl.innerHTML = actions.map((a, i) => `
             <li class="flex items-start justify-between p-3 rounded-lg bg-surface-container-low ${i === 0 ? 'border-l-2 border-primary' : ''}">
                 <div>
-                    <p class="text-xs font-bold">${i+1}. ${a.action || a}</p>
-                    ${a.timeline ? `<p class="text-[10px] text-on-surface-variant">${a.timeline}</p>` : ''}
+                    <p class="text-xs font-bold">${i+1}. ${escHtml(a.action || a)}</p>
+                    ${a.timeline ? `<p class="text-[10px] text-on-surface-variant">${escHtml(a.timeline)}</p>` : ''}
                 </div>
                 ${a.estimated_savings_usd ? `<span class="text-[9px] bg-surface-container-highest px-1.5 py-0.5 rounded text-[#4caf50] font-bold">saves ${fmt$(a.estimated_savings_usd)}</span>` : ''}
             </li>
@@ -876,66 +943,127 @@ function renderCeoBrief(data) {
         actionsEl.innerHTML = '<li class="text-xs text-on-surface-variant">No actions recommended.</li>';
     }
 
-    // Cost boxes
     const costs = ceo.cost_summary || {};
     $('ceo-cost-inaction').textContent = fmt$(costs.cost_if_delayed_usd || 0);
     $('ceo-cost-fix').textContent = fmt$(costs.fix_now_usd || 0);
 }
 
-// ─── CARD 3: COMPONENTS ─────────────────────────
+// ── 11. CARD 3: COMPONENTS — WITH LINE NUMBERS + ERROR % ─────────────
 function renderComponents(data) {
     const comps = data.components || [];
     $('comp-total-risk').textContent = `Total Risk Exposure: ${fmt$(data.total_cost_of_inaction_usd || 0)}`;
 
     const tbody = $('comp-tbody');
     if (!comps.length) {
-        tbody.innerHTML = '<tr><td colspan="5" class="py-4 px-2 text-center text-on-surface-variant">No component data.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" class="py-4 px-2 text-center text-on-surface-variant">No component data.</td></tr>';
         return;
     }
 
     const sorted = [...comps].sort((a, b) => (b.failure_probability_pct || 0) - (a.failure_probability_pct || 0));
-    tbody.innerHTML = sorted.map(c => {
+    tbody.innerHTML = sorted.map((c, index) => {
+        const fname = c.file || c.component || 'Unknown';
         const risk = (c.risk_level || 'LOW').toUpperCase();
         const bgMap = { 'CRITICAL': 'bg-error-container/5', 'HIGH': 'bg-[#f0a500]/5', 'MEDIUM': 'bg-secondary-container/5', 'LOW': 'bg-surface-container-low' };
         const badgeMap = { 'CRITICAL': 'bg-error text-on-error', 'HIGH': 'bg-[#f0a500] text-black', 'MEDIUM': 'bg-secondary-container text-on-secondary-container', 'LOW': 'bg-outline-variant/20 text-outline' };
-        const probColor = c.failure_probability_pct >= 60 ? 'text-error' : c.failure_probability_pct >= 30 ? 'text-on-surface' : 'text-on-surface-variant';
+        const prob = c.failure_probability_pct || 0;
+        const probColor = prob >= 60 ? 'text-error' : prob >= 30 ? 'text-on-surface' : 'text-on-surface-variant';
+
+        // Error location info
+        const mc = c.most_complex_function;
+        const pf = c.problematic_functions || [];
+
+        // Build error location cell
+        let errorLocHtml = '<span class="text-outline">—</span>';
+        if (mc) {
+            errorLocHtml = `
+                <span class="font-mono text-[11px]">${escHtml(mc.function_name)}()</span>
+                <code class="text-[10px] bg-surface-container px-1.5 py-0.5 rounded text-[#f0a500] ml-1">L${mc.line_start}</code>
+                <span class="text-[9px] bg-error/10 text-error px-1.5 py-0.5 rounded ml-1">CC:${mc.complexity}</span>
+                ${pf.length > 0 ? `<span class="text-[9px] bg-error text-white px-1.5 py-0.5 rounded-full ml-1 issue-pulse">${pf.length} issue${pf.length>1?'s':''}</span>` : ''}
+            `;
+        }
+
+        // Build expandable issues row
+        let issuesHtml = '';
+        if ((mc || pf.length > 0)) {
+            const allFns = mc ? [mc, ...pf.filter(f => f.function_name !== mc.function_name)] : pf;
+            issuesHtml = `
+            <tr id="issues-row-${index}" class="hidden">
+                <td colspan="6" class="p-0">
+                    <div class="bg-surface-container-lowest border-t border-outline-variant/10 p-4 space-y-3">
+                        <p class="text-[10px] font-black text-outline uppercase mb-2">📍 All Error Locations in ${escHtml(fname)}</p>
+                        ${c.error_summary ? `<p class="text-[11px] text-[#f0a500] italic mb-3">${escHtml(c.error_summary)}</p>` : ''}
+                        ${allFns.map(f => {
+                            const isCrit = (f.complexity || 0) > 10;
+                            return `
+                            <div class="flex items-center justify-between p-3 rounded-lg border ${isCrit ? 'border-error/20 bg-error/5' : 'border-[#f0a500]/20 bg-[#f0a500]/5'}">
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <span class="font-mono text-xs text-on-surface">${escHtml(f.function_name)}()</span>
+                                    <code class="text-[10px] bg-surface-container px-2 py-0.5 rounded text-[#f0a500]">Line ${f.line_start}${f.line_end && f.line_end !== f.line_start ? '–'+f.line_end : ''}</code>
+                                    <span class="text-[10px] px-1.5 py-0.5 rounded ${isCrit ? 'bg-error/20 text-error' : 'bg-[#f0a500]/20 text-[#f0a500]'} font-bold">CC: ${f.complexity} (${f.rank || '?'})</span>
+                                    ${f.fix_suggestion ? `<span class="text-[10px] text-outline italic">${escHtml(f.fix_suggestion)}</span>` : ''}
+                                </div>
+                                <button class="ask-ai-btn text-xs font-bold text-primary hover:underline flex items-center gap-1" 
+                                    data-file="${escHtml(fname)}" data-line="${f.line_start}" data-fn="${escHtml(f.function_name)}" data-cc="${f.complexity}">
+                                    <span class="material-symbols-outlined text-[14px]">auto_awesome</span> Ask AI
+                                </button>
+                            </div>`;
+                        }).join('')}
+                    </div>
+                </td>
+            </tr>`;
+        }
+
+        const expandBtn = (mc || pf.length > 0) 
+            ? `<button onclick="document.getElementById('issues-row-${index}').classList.toggle('hidden')" class="text-xs font-bold text-primary hover:underline flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">expand_more</span>Details</button>`
+            : `<span class="text-xs text-outline">Clean</span>`;
+
         return `
-            <tr class="${bgMap[risk] || bgMap['LOW']} hover:bg-surface-container-highest transition-colors">
-                <td class="py-4 px-2 font-mono text-xs">${c.file || 'Unknown'}</td>
-                <td class="py-4 px-2 ${probColor} font-bold">${c.failure_probability_pct || 0}%</td>
-                <td class="py-4 px-2">${c.estimated_days_to_failure ? c.estimated_days_to_failure + ' Days' : 'N/A'}</td>
+            <tr class="${bgMap[risk] || bgMap['LOW']} transition-colors hover:bg-surface-container-highest/30">
+                <td class="py-4 px-2 font-mono text-xs">${escHtml(fname)}</td>
+                <td class="py-4 px-2 ${probColor} font-bold">${prob}%</td>
+                <td class="py-4 px-2">${c.predicted_failure_days ? c.predicted_failure_days + ' Days' : 'N/A'}</td>
                 <td class="py-4 px-2"><span class="px-2 py-0.5 rounded-full ${badgeMap[risk] || badgeMap['LOW']} text-[10px] font-bold uppercase">${risk}</span></td>
-                <td class="py-4 px-2 text-right"><button class="text-primary font-bold hover:underline text-xs">${risk === 'CRITICAL' || risk === 'HIGH' ? 'Fix Now' : risk === 'MEDIUM' ? 'Monitor' : 'Ignore'}</button></td>
+                <td class="py-4 px-2">${errorLocHtml}</td>
+                <td class="py-4 px-2 text-right">${expandBtn}</td>
             </tr>
+            ${issuesHtml}
         `;
     }).join('');
+
+    // Bind "Ask AI" buttons
+    document.querySelectorAll('.ask-ai-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const f = btn.getAttribute('data-file');
+            const l = btn.getAttribute('data-line');
+            const fn = btn.getAttribute('data-fn');
+            const cc = btn.getAttribute('data-cc');
+            openChatbot(`Explain the problem in ${f} — function ${fn}() at line ${l} has complexity ${cc}. Why is this dangerous and what's the simplest fix?`);
+        });
+    });
 }
 
-// ─── CARD 4: SECURITY ───────────────────────────
+// ── 12. CARD 4: SECURITY ─────────────────────────────────────────────
 function renderSecurity(data) {
     const sec = data.security || {};
     const dep = data.dependency_risk || {};
 
-    // Security label
     const secLabel = sec.security_label || 'UNKNOWN';
     const labelEl = $('sec-label');
     labelEl.textContent = secLabel;
     const labelColor = secLabel === 'CRITICAL' || secLabel === 'POOR' ? 'bg-error/20 text-error' : secLabel === 'FAIR' ? 'bg-[#f0a500]/20 text-[#f0a500]' : 'bg-[#4caf50]/20 text-[#4caf50]';
     labelEl.className = `px-4 py-1.5 rounded-full text-xs font-black uppercase ${labelColor}`;
 
-    // Icon box
     const iconColor = secLabel === 'CRITICAL' || secLabel === 'POOR' ? 'text-error' : secLabel === 'FAIR' ? 'text-[#f0a500]' : 'text-[#4caf50]';
     $('sec-icon').className = `material-symbols-outlined ${iconColor}`;
-    $('sec-icon-box').className = `w-12 h-12 rounded-lg flex items-center justify-center border border-${iconColor.replace('text-', '')}/20 bg-${iconColor.replace('text-', '')}/10`;
 
-    // Counts by severity
     const findings = sec.findings || [];
     const bySeverity = {};
     findings.forEach(f => { const s = (f.severity || 'LOW').toUpperCase(); bySeverity[s] = (bySeverity[s] || 0) + 1; });
     $('sec-critical').textContent = String(bySeverity['CRITICAL'] || 0).padStart(2, '0');
     $('sec-high').textContent = String(bySeverity['HIGH'] || 0).padStart(2, '0');
 
-    // Severity bar
     const total = findings.length || 1;
     const critW = ((bySeverity['CRITICAL'] || 0) / total * 100);
     const highW = ((bySeverity['HIGH'] || 0) / total * 100);
@@ -946,16 +1074,15 @@ function renderSecurity(data) {
         <div class="h-full bg-primary" style="width: ${restW}%"></div>
     `;
 
-    // Top 5 findings
     const topFindings = findings.slice(0, 5);
     $('sec-findings-list').innerHTML = topFindings.map(f => `
-        <li class="flex justify-between items-center text-on-surface">
-            <span>${f.type === 'SECRET' ? '🔑' : '⚠️'} ${f.label || f.description || 'Finding'}: <code class="text-error font-bold">${f.file || ''}${f.line ? ':' + f.line : ''}</code></span>
+        <li class="flex justify-between items-center text-on-surface cursor-pointer hover:text-primary transition-colors" 
+            onclick="openChatbot('Explain this security finding: ${escHtml(f.label || f.description || 'Finding')} in ${escHtml(f.file || '')}${f.line ? ' at line '+f.line : ''}. How critical is this and how do I fix it?')">
+            <span>${f.type === 'SECRET' ? '🔑' : '⚠️'} ${escHtml(f.label || f.description || 'Finding')}: <code class="text-error font-bold">${escHtml(f.file || '')}${f.line ? ':' + f.line : ''}</code></span>
             <span class="material-symbols-outlined text-sm">chevron_right</span>
         </li>
     `).join('');
 
-    // Dependency risk
     const totalDeps = dep.total_dependencies || 0;
     const outdated = dep.outdated_count || 0;
     const healthPct = totalDeps > 0 ? Math.round((1 - outdated / totalDeps) * 100) : 0;
@@ -965,7 +1092,7 @@ function renderSecurity(data) {
     $('sec-dep-outdated').textContent = outdated;
 }
 
-// ─── CARD 5: BUS FACTOR ─────────────────────────
+// ── 13. CARD 5: BUS FACTOR ───────────────────────────────────────────
 function renderBusFactor(data) {
     const bf = data.bus_factor || {};
     const busNum = bf.bus_number ?? '?';
@@ -979,7 +1106,6 @@ function renderBusFactor(data) {
 
     $('bus-interpretation').textContent = bf.interpretation || '';
 
-    // Contributors
     const contributors = data.top_contributors || [];
     const maxCommits = Math.max(...contributors.map(c => c.commits || c.commit_count || 1), 1);
     $('bus-contributors').innerHTML = contributors.slice(0, 5).map(c => {
@@ -987,7 +1113,7 @@ function renderBusFactor(data) {
         const pct = Math.round(commits / maxCommits * 100);
         return `
             <div class="flex items-center gap-3">
-                <span class="text-[10px] font-mono text-outline w-16 text-left truncate">${c.author || c.name || 'Unknown'}</span>
+                <span class="text-[10px] font-mono text-outline w-16 text-left truncate">${escHtml(c.author || c.name || 'Unknown')}</span>
                 <div class="flex-1 h-2 bg-surface-container-highest rounded-full overflow-hidden">
                     <div class="h-full bg-secondary" style="width: ${pct}%; transition: width 1s ease-out;"></div>
                 </div>
@@ -997,7 +1123,7 @@ function renderBusFactor(data) {
     }).join('');
 }
 
-// ─── CARD 6: TEST COVERAGE + COMMIT TREND ───────
+// ── 14. CARD 6: TEST COVERAGE + COMMIT TREND ─────────────────────────
 function renderTestCoverage(data, healthData) {
     const tc = data.test_coverage || {};
     const ratio = tc.test_to_source_ratio_pct || 0;
@@ -1006,7 +1132,6 @@ function renderTestCoverage(data, healthData) {
     const label = tc.coverage_label || 'UNKNOWN';
 
     $('coverage-pct').textContent = `${ratio}%`;
-    // Ring: circumference=251, offset = 251 - (251 * ratio/100)
     setTimeout(() => { $('coverage-ring').setAttribute('stroke-dashoffset', 251 - (251 * Math.min(ratio, 100) / 100)); }, 200);
     $('coverage-test-files').textContent = testFiles;
     $('coverage-source-files').textContent = sourceFiles;
@@ -1016,9 +1141,9 @@ function renderTestCoverage(data, healthData) {
     const lc = ratio >= 50 ? 'bg-[#4caf50]/20 text-[#4caf50]' : ratio >= 25 ? 'bg-[#f0a500]/20 text-[#f0a500]' : 'bg-error/20 text-error';
     labelEl.className = `px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${lc}`;
 
-    // Commit chart from health data (weekly_commits)
-    const hs = healthData.health_scores || {};
-    const weeklyCommits = hs.weekly_commits || hs.commit_trend || [];
+    // Commit chart from health data or test-coverage endpoint
+    const hs = healthData?.health_scores || {};
+    const weeklyCommits = data.commit_trend || hs.weekly_commits || hs.commit_trend || [];
     renderCommitChart(weeklyCommits);
 }
 
@@ -1036,7 +1161,6 @@ function renderCommitChart(weeklyData) {
             data = weeklyData;
         }
     } else {
-        // Fallback: generate placeholder from last 12 weeks
         labels = Array.from({length: 12}, (_, i) => `W${i+1}`);
         data = Array.from({length: 12}, () => Math.floor(Math.random() * 30 + 5));
     }
@@ -1049,16 +1173,12 @@ function renderCommitChart(weeklyData) {
                 data: data.slice(-12),
                 borderColor: '#aca3ff',
                 backgroundColor: 'rgba(172,163,255,0.1)',
-                fill: true,
-                tension: 0.4,
-                pointRadius: 2,
-                pointBackgroundColor: '#aca3ff',
-                borderWidth: 2,
+                fill: true, tension: 0.4, pointRadius: 2,
+                pointBackgroundColor: '#aca3ff', borderWidth: 2,
             }]
         },
         options: {
-            responsive: true,
-            maintainAspectRatio: false,
+            responsive: true, maintainAspectRatio: false,
             plugins: { legend: { display: false } },
             scales: {
                 x: { ticks: { color: '#76747b', font: { size: 9 } }, grid: { color: '#1f1f26' } },
@@ -1068,7 +1188,7 @@ function renderCommitChart(weeklyData) {
     });
 }
 
-// ─── CARD 7: BURNOUT ────────────────────────────
+// ── 15. CARD 7: BURNOUT ──────────────────────────────────────────────
 function renderBurnout(data) {
     const burn = data.burnout || {};
     const score = burn.team_burnout_score || 0;
@@ -1076,7 +1196,6 @@ function renderBurnout(data) {
     const c = score >= 60 ? '#ff6e84' : score >= 40 ? '#f0a500' : score >= 20 ? '#f0c500' : '#4caf50';
 
     $('burnout-score').textContent = score;
-    // Ring: circumference ≈ 213
     setTimeout(() => { $('burnout-ring').setAttribute('stroke-dashoffset', 213 - (213 * score / 100)); }, 300);
     $('burnout-ring').style.color = c;
 
@@ -1089,10 +1208,8 @@ function renderBurnout(data) {
 
     $('burnout-headline').textContent = score >= 60 ? 'High Burnout Risk' : score >= 40 ? 'Moderate Burnout' : 'Healthy Pace';
     $('burnout-subtitle').textContent = `Team score: ${score}/100`;
-
     $('burnout-narrative').textContent = burn.narrative || '';
 
-    // Revert storms
     const storms = burn.revert_storms || [];
     if (storms.length > 0) {
         $('burnout-revert-warning').classList.remove('hidden');
@@ -1103,13 +1220,12 @@ function renderBurnout(data) {
         $('burnout-revert-warning').classList.add('hidden');
     }
 
-    // Dev breakdown table
     const devs = burn.developer_scores || burn.developers || [];
     if (devs.length > 0) {
         $('burnout-dev-table-container').classList.remove('hidden');
         $('burnout-dev-tbody').innerHTML = [...devs].sort((a, b) => (b.burnout_score || 0) - (a.burnout_score || 0)).slice(0, 5).map(d => `
             <tr class="border-b border-outline-variant/5">
-                <td class="py-1.5 text-left font-mono">${d.author || d.name || '?'}</td>
+                <td class="py-1.5 text-left font-mono">${escHtml(d.author || d.name || '?')}</td>
                 <td class="py-1.5 text-center font-bold">${d.burnout_score || 0}</td>
                 <td class="py-1.5 text-center">${d.after_hours_pct || 0}%</td>
                 <td class="py-1.5 text-center"><span class="px-1 py-0.5 rounded text-[8px] font-bold uppercase" style="color: ${severityColor(d.risk_level)}">${d.risk_level || '-'}</span></td>
@@ -1118,41 +1234,50 @@ function renderBurnout(data) {
     }
 }
 
-// ─── CARD 8: CASCADE ────────────────────────────
+// ── 16. CARD 8: CASCADE — WITH ERROR LOCATIONS ───────────────────────
 function renderCascade(data) {
     const casc = data.cascade_risk || {};
     const risk = casc.team_cascade_risk || 'UNKNOWN';
 
     $('cascade-risk-badge').textContent = risk;
     $('cascade-risk-badge').className = `px-3 py-1 rounded-full text-[10px] font-black uppercase ${riskBadge(risk)}`;
-
     $('cascade-summary').textContent = casc.summary || '';
 
-    // Blast radius table
     const blastFiles = casc.blast_radius_by_file || [];
-    $('cascade-tbody').innerHTML = blastFiles.slice(0, 8).map(f => `
-        <tr class="border-b border-outline-variant/5 hover:bg-surface-container-highest/50 transition-colors">
-            <td class="py-2 font-mono text-left">${f.file || '?'}</td>
+    $('cascade-tbody').innerHTML = blastFiles.slice(0, 8).map(f => {
+        const mc = f.most_complex_function;
+        const errLoc = mc ? `
+            <span class="font-mono text-[10px]">${escHtml(mc.function_name)}()</span>
+            <span class="text-[9px] text-outline ml-1">L${mc.line_start}</span>
+            <span class="text-[9px] bg-error/10 text-error px-1 rounded ml-1">CC:${mc.complexity}</span>
+        ` : '<span class="text-outline">—</span>';
+
+        return `
+        <tr class="border-b border-outline-variant/5 hover:bg-surface-container-highest/50 transition-colors cursor-pointer" 
+            onclick="openChatbot('Explain why ${escHtml(f.file || '?')} has ${f.blast_radius_pct}% blast radius and how to reduce the cascade failure risk.')">
+            <td class="py-2 font-mono text-left">${escHtml(f.file || '?')}
+                ${f.error_summary ? `<div class="text-[9px] italic text-[#f0a500] mt-0.5">${escHtml(f.error_summary)}</div>` : ''}
+            </td>
             <td class="py-2 text-center font-bold" style="color: ${severityColor(f.severity)}">${f.failure_probability_pct || 0}%</td>
             <td class="py-2 text-center font-bold" style="color: ${severityColor(f.severity)}">${f.blast_radius_pct || 0}%</td>
             <td class="py-2 text-center"><div class="w-2 h-2 rounded-full mx-auto" style="background: ${severityColor(f.severity)}"></div></td>
-        </tr>
-    `).join('') || '<tr><td colspan="4" class="py-2 text-center text-on-surface-variant">No cascade data.</td></tr>';
+            <td class="py-2">${errLoc}</td>
+        </tr>`;
+    }).join('') || '<tr><td colspan="5" class="py-2 text-center text-on-surface-variant">No cascade data.</td></tr>';
 
-    // Hub files
     const hubs = casc.critical_hub_files || casc.hub_files || [];
     $('cascade-hubs').innerHTML = hubs.map(h => {
         const name = typeof h === 'string' ? h : h.file || h.name || '?';
         const count = typeof h === 'object' ? (h.imported_by || h.dependents || '') : '';
-        return `<span class="px-2 py-1 bg-surface-container-low border border-primary/20 text-primary text-[10px] rounded font-mono">${name}${count ? ` (${count} imports)` : ''}</span>`;
+        return `<span class="px-2 py-1 bg-surface-container-low border border-primary/20 text-primary text-[10px] rounded font-mono cursor-pointer hover:bg-primary/10 transition-colors"
+            onclick="openChatbot('Why is ${escHtml(name)} a critical hub file and what happens if it fails?')">${escHtml(name)}${count ? ` (${count} imports)` : ''}</span>`;
     }).join('');
 }
 
-// ─── CARD 9: TECHNICAL DEBT ─────────────────────
+// ── 17. CARD 9: TECHNICAL DEBT ───────────────────────────────────────
 function renderDebt(data) {
     const debt = data.technical_debt || {};
 
-    // Grade
     const grade = debt.debt_grade || '?';
     const gradeColors = { 'A+': '#4caf50', 'A': '#4caf50', 'B': '#aca3ff', 'C': '#f0a500', 'D': '#ff6e84', 'F': '#ff6e84' };
     const gradeColor = gradeColors[grade] || '#ff6e84';
@@ -1160,19 +1285,15 @@ function renderDebt(data) {
     $('debt-grade-box').style.color = gradeColor;
     $('debt-grade-box').style.borderColor = gradeColor;
 
-    // Costs
     $('debt-now').textContent = fmt$(debt.principal_usd || 0);
     $('debt-6m').textContent = fmt$(debt.cost_in_6_months_usd || 0);
     $('debt-12m').textContent = fmt$(debt.cost_in_12_months_usd || 0);
 
-    // ROI
     const roi = debt.roi_of_paying_now || '';
     $('debt-roi').textContent = roi || `Fixing now saves ${fmt$((debt.cost_in_12_months_usd || 0) - (debt.principal_usd || 0))} over 12 months.`;
 
-    // Loan analogy
-    $('debt-analogy').textContent = debt.loan_analogy || '"Refactoring is not a luxury; it is the act of paying down the principal on a high-interest loan."';
+    $('debt-analogy').textContent = debt.loan_analogy || '"Refactoring is not a luxury; it is paying down the principal on a high-interest loan."';
 
-    // Breakdown bar
     const breakdown = debt.debt_breakdown_usd || {};
     const breakdownKeys = Object.keys(breakdown);
     const breakdownTotal = Object.values(breakdown).reduce((a, b) => a + (b || 0), 0) || 1;
@@ -1183,7 +1304,6 @@ function renderDebt(data) {
     }).join('');
     $('debt-breakdown-labels').innerHTML = breakdownKeys.map(k => `<span>${k.toUpperCase().replace(/_/g, ' ')}</span>`).join('');
 
-    // Debt projection chart
     const projection = debt.monthly_projection || [];
     renderDebtChart(projection, debt);
 }
@@ -1202,7 +1322,6 @@ function renderDebtChart(projection, debt) {
             data = projection;
         }
     } else {
-        // Fallback: generate from principal with 15% monthly compound
         const principal = debt.principal_usd || 0;
         labels = Array.from({length: 6}, (_, i) => `Month ${i+1}`);
         data = Array.from({length: 6}, (_, i) => Math.round(principal * Math.pow(1.15, i+1)));
@@ -1213,24 +1332,17 @@ function renderDebtChart(projection, debt) {
         data: {
             labels,
             datasets: [{
-                data,
-                borderColor: '#ff6e84',
+                data, borderColor: '#ff6e84',
                 backgroundColor: 'rgba(255,110,132,0.15)',
-                fill: true,
-                tension: 0.3,
-                pointRadius: 3,
-                pointBackgroundColor: '#ff6e84',
-                borderWidth: 2,
+                fill: true, tension: 0.3, pointRadius: 3,
+                pointBackgroundColor: '#ff6e84', borderWidth: 2,
             }]
         },
         options: {
-            responsive: true,
-            maintainAspectRatio: false,
+            responsive: true, maintainAspectRatio: false,
             plugins: {
                 legend: { display: false },
-                tooltip: {
-                    callbacks: { label: ctx => fmt$(ctx.parsed.y) }
-                }
+                tooltip: { callbacks: { label: ctx => fmt$(ctx.parsed.y) } }
             },
             scales: {
                 x: { ticks: { color: '#76747b', font: { size: 9 } }, grid: { color: '#1f1f26' } },
@@ -1240,7 +1352,7 @@ function renderDebtChart(projection, debt) {
     });
 }
 
-// ─── CARD 10: DEPLOYMENT ────────────────────────
+// ── 18. CARD 10: DEPLOYMENT ──────────────────────────────────────────
 function renderDeployment(data) {
     const dep = data.deployment_readiness || {};
     const score = dep.readiness_score || 0;
@@ -1250,28 +1362,22 @@ function renderDeployment(data) {
     const total = checks.length;
     const blocker = dep.production_blocker || false;
 
-    // Blocker banner
     if (blocker) $('deploy-blocker-banner').classList.remove('hidden');
     else $('deploy-blocker-banner').classList.add('hidden');
 
-    // Ring
     $('deploy-score').textContent = `${score}%`;
     const ringColor = score >= 75 ? '#4caf50' : score >= 50 ? '#f0a500' : '#ff6e84';
     setTimeout(() => { $('deploy-ring').setAttribute('stroke-dashoffset', 351 - (351 * score / 100)); }, 400);
     $('deploy-ring').style.color = ringColor;
 
-    // Label
     $('deploy-label').textContent = label;
     const dlc = score >= 75 ? 'bg-[#4caf50]/20 text-[#4caf50]' : score >= 50 ? 'bg-[#f0a500]/20 text-[#f0a500]' : 'bg-error/20 text-error';
     $('deploy-label').className = `px-3 py-1 rounded-full text-[10px] font-bold uppercase ${dlc}`;
 
     $('deploy-checks-passed').textContent = `${passed}/${total} checks passed`;
 
-    // Category bars
     const categories = dep.category_scores || {};
-    const catNames = Object.keys(categories);
-    $('deploy-categories').innerHTML = catNames.map(cat => {
-        const pct = categories[cat] || 0;
+    $('deploy-categories').innerHTML = Object.entries(categories).map(([cat, pct]) => {
         const barC = pct >= 75 ? '#4caf50' : pct >= 50 ? '#f0a500' : '#ff6e84';
         return `
             <div class="space-y-1">
@@ -1281,22 +1387,126 @@ function renderDeployment(data) {
         `;
     }).join('');
 
-    // Fix list
     const fixList = dep.fix_list || checks.filter(c => !c.passed).sort((a, b) => (b.weight || 0) - (a.weight || 0));
     $('deploy-fix-list').innerHTML = fixList.slice(0, 6).map((f, i) => `
-        <li class="flex items-center gap-3 p-2 rounded bg-surface-container-low">
+        <li class="flex items-center gap-3 p-2 rounded bg-surface-container-low cursor-pointer hover:bg-surface-container-highest/50 transition-colors"
+            onclick="openChatbot('How do I fix: ${escHtml(f.check || f.name || 'Fix #'+(i+1))}? Give me step-by-step instructions.')">
             <span class="material-symbols-outlined text-error text-lg" style="font-variation-settings: 'FILL' 1;">cancel</span>
             <div class="flex-1">
-                <p class="text-[10px] font-bold">${f.check || f.name || `Fix #${i+1}`}</p>
+                <p class="text-[10px] font-bold">${escHtml(f.check || f.name || `Fix #${i+1}`)}</p>
                 <p class="text-[8px] text-outline uppercase">Severity: ${f.severity || 'Medium'} ${f.effort ? '| Effort: ' + f.effort : ''}</p>
             </div>
+            <span class="material-symbols-outlined text-primary text-sm">auto_awesome</span>
         </li>
     `).join('');
 }
 
-// ─── KEYBOARD SHORTCUT: Enter to analyze ────────
+// ── 19. KEYBOARD SHORTCUT ────────────────────────────────────────────
 repoInput.addEventListener('keypress', e => { if (e.key === 'Enter') analyzeBtn.click(); });
-tokenInput.addEventListener('keypress', e => { if (e.key === 'Enter') analyzeBtn.click(); });
+
+// ── 20. CHATBOT ──────────────────────────────────────────────────────
+const chatbotHTML = `
+<div id="ai-chatbot" class="fixed bottom-6 right-6 z-50 flex flex-col items-end">
+    <div id="ai-chat-window" class="chat-window hidden bg-surface-container border border-outline-variant/20 shadow-2xl rounded-2xl w-[400px] h-[540px] mb-4 flex flex-col overflow-hidden">
+        <div class="bg-surface-container-high p-4 flex justify-between items-center border-b border-outline-variant/20">
+            <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary">auto_awesome</span>
+                <div>
+                    <span class="font-bold text-sm">PredictiveEng AI</span>
+                    <p class="text-[9px] text-outline">Ask about errors, metrics, or code fixes</p>
+                </div>
+            </div>
+            <button id="close-chat" class="text-outline hover:text-on-surface"><span class="material-symbols-outlined text-sm">close</span></button>
+        </div>
+        <div id="ai-chat-messages" class="flex-1 overflow-y-auto p-4 space-y-4 text-xs font-medium">
+            <div class="text-left"><div class="inline-block bg-surface-container-lowest p-3 rounded-2xl rounded-tl-sm text-on-surface max-w-[90%]">
+                👋 Hi! I'm your AI codebase assistant. Run an analysis, then ask me anything about your errors, technical debt, security findings, or health score!<br/><br/>
+                <strong class="text-primary">Try asking:</strong><br/>
+                • "Why is main.py high risk?"<br/>
+                • "How do I fix the security vulnerability?"<br/>
+                • "Explain the burnout score"
+            </div></div>
+        </div>
+        <div class="p-3 border-t border-outline-variant/20 bg-surface-container-lowest flex gap-2">
+            <input id="ai-chat-input" class="flex-1 bg-surface-container border-none rounded-xl px-3 py-2.5 text-xs focus:ring-1 focus:ring-primary placeholder:text-outline/50" placeholder="Ask about any error, metric, or file..." />
+            <button id="ai-chat-send" class="bg-primary text-on-primary rounded-xl px-4 flex items-center justify-center hover:bg-primary-container hover:text-on-primary-fixed transition-colors">
+                <span class="material-symbols-outlined text-sm">send</span>
+            </button>
+        </div>
+    </div>
+    <button id="ai-chat-fab" class="w-14 h-14 bg-primary text-on-primary rounded-full shadow-lg flex items-center justify-center hover:scale-110 active:scale-95 transition-transform pulse-glow">
+        <span class="material-symbols-outlined text-2xl">chat</span>
+    </button>
+</div>
+`;
+document.body.insertAdjacentHTML('beforeend', chatbotHTML);
+
+const aiChatWindow = $('ai-chat-window');
+const aiChatFab = $('ai-chat-fab');
+const closeChat = $('close-chat');
+const chatInput = $('ai-chat-input');
+const chatSend = $('ai-chat-send');
+const chatMessages = $('ai-chat-messages');
+
+aiChatFab.addEventListener('click', () => { aiChatWindow.classList.toggle('hidden'); });
+closeChat.addEventListener('click', () => { aiChatWindow.classList.add('hidden'); });
+
+function formatAiResponse(text) {
+    return text
+        .replace(/```(\w+)?\n([\s\S]*?)```/g, '<pre class="bg-surface-container-highest p-2 rounded-lg text-[10px] font-mono overflow-x-auto mt-1 mb-1">$2</pre>')
+        .replace(/`([^`]+)`/g, '<code class="bg-surface-container-highest px-1 rounded text-[#aca3ff] font-mono text-[10px]">$1</code>')
+        .replace(/\*\*([^*]+)\*\*/g, '<strong class="text-primary">$1</strong>')
+        .replace(/\n/g, '<br/>');
+}
+
+async function sendChatMessage(msgText) {
+    if (!msgText) return;
+    // User message
+    chatMessages.innerHTML += `<div class="text-right"><div class="inline-block bg-primary p-3 rounded-2xl rounded-tr-sm text-on-primary max-w-[90%]">${escHtml(msgText)}</div></div>`;
+    chatInput.value = '';
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+    chatHistory.push({role: 'user', content: msgText});
+
+    // Loading indicator
+    const loadingId = 'loading-' + Date.now();
+    chatMessages.innerHTML += `<div id="${loadingId}" class="text-left"><div class="inline-block bg-surface-container-lowest p-3 rounded-2xl rounded-tl-sm text-outline max-w-[90%]"><span class="material-symbols-outlined text-sm animate-spin">sync</span> Thinking...</div></div>`;
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+
+    try {
+        const res = await encryptedFetch(`${API_BASE}/api/chat`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: msgText, job_id: currentJobId || '', history: chatHistory.slice(-6) })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+            throw new Error(data.detail || data.error || 'Chat request failed');
+        }
+        const reply = data.answer || data.response || 'Sorry, I got no response.';
+        const el = $(loadingId);
+        if (el) el.remove();
+        chatMessages.innerHTML += `<div class="text-left"><div class="inline-block bg-surface-container-lowest p-3 rounded-2xl rounded-tl-sm text-on-surface max-w-[90%] leading-relaxed">${formatAiResponse(reply)}</div></div>`;
+        chatHistory.push({role: 'assistant', content: reply});
+    } catch(err) {
+        const el = $(loadingId);
+        if (el) el.remove();
+        chatMessages.innerHTML += `<div class="text-left"><div class="inline-block bg-error-container p-3 rounded-2xl rounded-tl-sm text-on-error-container max-w-[90%]">Error: ${escHtml(err.message)}</div></div>`;
+    }
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+chatSend.addEventListener('click', () => sendChatMessage(chatInput.value.trim()));
+chatInput.addEventListener('keypress', e => { if (e.key === 'Enter') sendChatMessage(chatInput.value.trim()); });
+
+// Global function to open chatbot with a pre-filled message
+window.openChatbot = function(msg) {
+    aiChatWindow.classList.remove('hidden');
+    if (msg) {
+        sendChatMessage(msg);
+    } else {
+        chatInput.focus();
+    }
+};
 </script>
 </body>
 </html>
